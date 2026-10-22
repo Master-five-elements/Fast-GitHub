@@ -16,7 +16,7 @@
           <div class="brand-logo">GH</div>
           <div class="brand-text">
             <div class="brand-name">GitHub 加速</div>
-            <div class="brand-sub">智能节点版 v2.2.0</div>
+            <div class="brand-sub">智能节点版 v2.4.0</div>
           </div>
         </div>
 
@@ -159,6 +159,8 @@
                   <option value="all">全部</option>
                   <option value="enabled">已启用</option>
                   <option value="disabled">已停用</option>
+                  <option value="full">可加速仓库</option>
+                  <option value="download">仅下载</option>
                   <option value="custom">自定义</option>
                 </select>
                 <button class="fg-btn" id="btnTestLatency" type="button">测延迟</button>
@@ -413,41 +415,6 @@
           </div>
 
           <div class="fg-card" style="margin-top: 16px">
-            <h2 class="fg-section-title">页面增强</h2>
-            <p class="fg-section-desc">Web IDE 跳转与 Issue 翻译。</p>
-            <div class="fg-field">
-              <label class="fg-label" for="webIDE">Web IDE</label>
-              <select class="fg-select" id="webIDE">
-                <option value="Nothing">不使用</option>
-                <option value="GitHub.Dev">GitHub.Dev</option>
-                <option value="GitHub1s.Com">GitHub1s.Com</option>
-              </select>
-              <div class="fg-hint">
-                GitHub1s 项目：
-                <a href="https://github.com/conwnet/github1s" target="_blank"
-                  >conwnet/github1s</a
-                >
-              </div>
-            </div>
-            <div class="fg-field">
-              <label class="fg-label" for="token">腾讯 AI 翻译 Token</label>
-              <input
-                class="fg-input"
-                id="token"
-                placeholder="填写后可在 Issue 页面一键翻译"
-              />
-            </div>
-            <div class="fg-field">
-              <label class="fg-label" for="language">翻译目标语言</label>
-              <select class="fg-select" id="language">
-                <option value="nothing">不翻译</option>
-                <option value="zh">中文</option>
-                <option value="en">英语</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="fg-card" style="margin-top: 16px">
             <h2 class="fg-section-title">外观</h2>
             <div class="fg-field">
               <label class="fg-label" for="theme">主题</label>
@@ -486,6 +453,23 @@
                 >
               </li>
             </ul>
+
+            <div class="feedback-card">
+              <div class="feedback-main">
+                <div class="feedback-title">💬 反馈与建议</div>
+                <div class="feedback-desc">
+                  节点失效、功能异常、使用问题或改进建议，欢迎到本项目仓库提 Issue。
+                </div>
+              </div>
+              <a
+                class="fg-btn fg-btn-primary"
+                href="https://github.com/Master-five-elements/Fast-GitHub/issues"
+                target="_blank"
+                rel="noopener"
+                >前往反馈</a
+              >
+            </div>
+
             <div class="notice">
               ⚠️ 第三方公益节点会中转你的请求，请勿用于私有仓库、带 Token 或 Cookie 的地址。
             </div>
