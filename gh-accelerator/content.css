@@ -1,5 +1,6 @@
 /* ==================================================================
- * 注入到 GitHub 页面的样式（跟随 GitHub 明暗主题）
+ * 注入到 GitHub 页面的样式 · 星露谷素风
+ * 自带不透明羊皮纸面板，不依赖 GitHub 明暗主题
  * ================================================================== */
 
 .fg-speed {
@@ -8,8 +9,7 @@
   vertical-align: middle;
   margin-left: 8px;
   font-family:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", Helvetica, Arial, sans-serif;
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", Verdana, Helvetica, Arial, sans-serif;
 }
 
 /* ------------------------------ 触发按钮 ------------------------------ */
@@ -20,29 +20,30 @@
   gap: 5px;
   height: 32px;
   padding: 0 15px;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #5b5bd6, #a855f7 70%, #06b6d4);
-  background-size: 180% 180%;
+  border: 2px solid #4d7433;
+  border-radius: 8px;
+  background: #6a994e;
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(91, 91, 214, 0.34);
+  box-shadow: 3px 3px 0 rgba(58, 38, 18, 0.28);
   transition:
-    background-position 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 0.2s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.16s ease;
 }
 
 .fg-trigger:hover {
-  background-position: 100% 0;
-  box-shadow: 0 6px 18px rgba(91, 91, 214, 0.42);
+  background: #5b8a40;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(58, 38, 18, 0.3);
 }
 
 .fg-trigger:active {
-  transform: translateY(1px) scale(0.985);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(58, 38, 18, 0.3);
 }
 
 .fg-bolt {
@@ -51,7 +52,7 @@
 
 .fg-caret {
   font-size: 10px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* ------------------------------ 下拉面板 ------------------------------ */
@@ -64,13 +65,11 @@
   display: none;
   width: 366px;
   padding: 14px;
-  border-radius: 18px;
-  background: #fff;
-  border: 1px solid rgba(31, 35, 40, 0.1);
-  box-shadow:
-    0 2px 6px rgba(31, 35, 40, 0.06),
-    0 24px 48px -12px rgba(31, 35, 40, 0.28);
-  animation: fg-panel-in 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  border: 2px solid #7a4f2a;
+  border-radius: 10px;
+  background: #fbf3dc;
+  box-shadow: 4px 4px 0 rgba(58, 38, 18, 0.28);
+  animation: fg-panel-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .fg-panel.is-open {
@@ -93,28 +92,28 @@
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 11px;
-  color: #1f2328;
+  color: #43321c;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .fg-panel-sub {
-  color: #818b98;
+  color: #9c8763;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .fg-chan {
   padding: 10px;
   margin-bottom: 8px;
-  border-radius: 12px;
-  background: #f6f8fa;
-  border: 1px solid rgba(31, 35, 40, 0.07);
+  border: 2px solid #d8c293;
+  border-radius: 8px;
+  background: #f2e6c5;
   transition: border-color 0.16s ease;
 }
 
 .fg-chan:hover {
-  border-color: rgba(91, 91, 214, 0.45);
+  border-color: #6a994e;
 }
 
 .fg-chan-head {
@@ -126,26 +125,28 @@
 
 .fg-chan-name {
   overflow: hidden;
-  color: #1f2328;
+  color: #43321c;
   font-size: 12.5px;
-  font-weight: 650;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fg-chan-tag {
   padding: 1px 7px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #5b5bd6, #a855f7);
+  border: 1.5px solid #4d7433;
+  border-radius: 6px;
+  background: #6a994e;
   color: #fff;
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .fg-chan-lat {
   margin-left: auto;
-  color: #1a7f37;
+  color: #3f6b2a;
   font-size: 11px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -159,10 +160,10 @@
   flex: 1;
   height: 29px;
   padding: 0 9px;
-  border: 1px solid #d8dee4;
-  border-radius: 9px;
-  background: #fff;
-  color: #1f2328;
+  border: 2px solid #b78a55;
+  border-radius: 6px;
+  background: #fbf3dc;
+  color: #43321c;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11.5px;
   outline: none;
@@ -172,46 +173,48 @@
 }
 
 .fg-chan-input:focus {
-  border-color: #5b5bd6;
-  box-shadow: 0 0 0 4px rgba(91, 91, 214, 0.16);
+  border-color: #6a994e;
+  box-shadow: 0 0 0 3px rgba(106, 153, 78, 0.25);
 }
 
 .fg-mini {
   height: 29px;
   padding: 0 11px;
-  border: 1px solid #d8dee4;
-  border-radius: 9px;
-  background: #fff;
-  color: #1f2328;
+  border: 2px solid #7a4f2a;
+  border-radius: 6px;
+  background: #f2e6c5;
+  color: #43321c;
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: 2px 2px 0 rgba(58, 38, 18, 0.22);
   transition:
-    border-color 0.16s ease,
-    background 0.16s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.16s ease;
 }
 
 .fg-mini:hover {
-  border-color: #5b5bd6;
-  background: #f2f2ff;
-  color: #5b5bd6;
+  background: #e7d6ad;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 rgba(58, 38, 18, 0.24);
 }
 
 .fg-mini:active {
-  transform: scale(0.97);
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 rgba(58, 38, 18, 0.24);
 }
 
 .fg-mini-primary {
-  border-color: transparent;
-  background: linear-gradient(135deg, #5b5bd6, #a855f7);
+  border-color: #4d7433;
+  background: #6a994e;
   color: #fff;
 }
 
 .fg-mini-primary:hover {
-  background: linear-gradient(135deg, #4f4fd0, #9333ea);
+  background: #5b8a40;
   color: #fff;
 }
 
@@ -225,46 +228,56 @@
   flex: 1;
 }
 
-/* ------------------------- 文件行按钮（IDE/下载） ------------------------- */
+.fg-panel-feedback {
+  display: block;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px dashed #d8c293;
+  color: #6e5638;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
 
-.fg-ide,
+.fg-panel-feedback:hover {
+  color: #4d7433;
+}
+
+.fg-panel-empty {
+  padding: 14px 4px;
+  color: #9c8763;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ------------------------- 文件行下载按钮 ------------------------- */
+
 .fg-dl {
   display: inline-flex;
   align-items: center;
   margin-left: 8px;
   padding: 2px 9px;
-  border: 1px solid #d8dee4;
-  border-radius: 999px;
-  background: #f6f8fa;
-  color: #57606a;
+  border: 2px solid #4d7433;
+  border-radius: 6px;
+  background: #6a994e;
+  color: #fff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   line-height: 18px;
   text-decoration: none;
   cursor: pointer;
   transition:
-    border-color 0.16s ease,
     background 0.16s ease,
     transform 0.12s ease;
 }
 
-.fg-dl {
-  border-color: transparent;
-  background: linear-gradient(135deg, #5b5bd6, #a855f7);
-  color: #fff;
-}
-
-.fg-ide:hover {
-  border-color: #5b5bd6;
-  background: #f2f2ff;
-  color: #5b5bd6;
-}
-
 .fg-dl:hover {
+  background: #5b8a40;
   transform: translateY(-1px);
   color: #fff;
-  filter: brightness(1.06);
 }
 
 /* ----------------------------- Release 加速 ----------------------------- */
@@ -274,14 +287,16 @@
   align-items: center;
   margin-left: 10px;
   padding: 3px 11px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #5b5bd6, #a855f7);
+  border: 2px solid #4d7433;
+  border-radius: 6px;
+  background: #6a994e;
   /* biome-ignore lint/complexity/noImportantStyles: 需覆盖 GitHub 原生链接颜色 */
   color: #fff !important;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+  box-shadow: 2px 2px 0 rgba(58, 38, 18, 0.22);
   transition:
     filter 0.16s ease,
     transform 0.12s ease;
@@ -291,38 +306,7 @@
   transform: translateY(-1px);
   /* biome-ignore lint/complexity/noImportantStyles: 需覆盖 GitHub 原生链接颜色 */
   color: #fff !important;
-  filter: brightness(1.08);
-}
-
-/* ------------------------------- 翻译 ------------------------------- */
-
-.fg-trans {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 3px 11px;
-  border: 1px solid #d8dee4;
-  border-radius: 999px;
-  background: #f6f8fa;
-  color: #0969da;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.16s ease;
-}
-
-.fg-trans:hover {
-  border-color: #0969da;
-}
-
-.fg-trans-out {
-  margin-top: 10px;
-  padding: 13px 15px;
-  border-radius: 12px;
-  background: #f6f8fa;
-  border: 1px solid rgba(31, 35, 40, 0.07);
-  font-size: 13px;
-  line-height: 1.7;
-  white-space: pre-wrap;
+  filter: brightness(1.06);
 }
 
 /* ------------------------------- 轻提示 ------------------------------- */
@@ -333,15 +317,14 @@
   bottom: 32px;
   z-index: 100000;
   padding: 10px 20px;
-  border-radius: 12px;
-  background: rgba(31, 35, 40, 0.94);
-  backdrop-filter: blur(10px);
-  color: #fff;
+  border: 2px solid #7a4f2a;
+  border-radius: 10px;
+  background: rgba(251, 243, 220, 0.96);
+  color: #43321c;
   font-size: 13px;
-  font-weight: 550;
-  font-family:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32);
+  font-weight: 700;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Verdana, sans-serif;
+  box-shadow: 4px 4px 0 rgba(58, 38, 18, 0.3);
   opacity: 0;
   transform: translate(-50%, 12px);
   pointer-events: none;
@@ -357,63 +340,48 @@
 
 html[data-color-mode="dark"] .fg-panel,
 html[data-dark-theme="dark"] .fg-panel {
-  background: #161b22;
-  border-color: #30363d;
-  box-shadow: 0 24px 48px -12px rgba(1, 4, 9, 0.8);
+  background: #3a342b;
+  border-color: #8a6a45;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
 }
 
 html[data-color-mode="dark"] .fg-panel-title,
 html[data-dark-theme="dark"] .fg-panel-title {
-  color: #e6edf3;
+  color: #f1e7d2;
 }
 
 html[data-color-mode="dark"] .fg-chan,
 html[data-dark-theme="dark"] .fg-chan {
-  background: #0d1117;
-  border-color: #30363d;
+  background: #443d31;
+  border-color: #5a4d3a;
 }
 
 html[data-color-mode="dark"] .fg-chan-name,
 html[data-dark-theme="dark"] .fg-chan-name {
-  color: #e6edf3;
+  color: #f1e7d2;
 }
 
 html[data-color-mode="dark"] .fg-chan-input,
 html[data-dark-theme="dark"] .fg-chan-input {
-  background: #0d1117;
-  border-color: #30363d;
-  color: #e6edf3;
+  background: #3a342b;
+  border-color: #8a6a45;
+  color: #f1e7d2;
 }
 
 html[data-color-mode="dark"] .fg-mini,
 html[data-dark-theme="dark"] .fg-mini {
-  background: #21262d;
-  border-color: #30363d;
-  color: #e6edf3;
+  background: #443d31;
+  border-color: #8a6a45;
+  color: #f1e7d2;
 }
 
 html[data-color-mode="dark"] .fg-mini:hover,
 html[data-dark-theme="dark"] .fg-mini:hover {
-  background: #262c36;
+  background: #504736;
 }
 
-html[data-color-mode="dark"] .fg-ide,
-html[data-dark-theme="dark"] .fg-ide {
-  background: #21262d;
-  border-color: #30363d;
-  color: #b1bac4;
-}
-
-html[data-color-mode="dark"] .fg-trans,
-html[data-dark-theme="dark"] .fg-trans {
-  background: #21262d;
-  border-color: #30363d;
-  color: #58a6ff;
-}
-
-html[data-color-mode="dark"] .fg-trans-out,
-html[data-dark-theme="dark"] .fg-trans-out {
-  background: #0d1117;
-  border-color: #30363d;
-  color: #e6edf3;
+html[data-color-mode="dark"] .fg-panel-feedback,
+html[data-dark-theme="dark"] .fg-panel-feedback {
+  border-top-color: #5a4d3a;
+  color: #c8b594;
 }
