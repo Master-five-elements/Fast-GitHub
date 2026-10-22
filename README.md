@@ -104,9 +104,6 @@ git clone https://github.com/Master-five-elements/Fast-GitHub.git
 
 然后在 `chrome://extensions` 里直接加载 `gh-accelerator/` 目录（无需任何构建步骤）。
 
-**方式三：Edge 加载项**（旧版 v1.5.10，功能少于新版）
-
-[GitHub 加速 - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb)
 
 ### 权限说明
 
