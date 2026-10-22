@@ -1,0 +1,15 @@
+{
+  "name": "gh-accelerator",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "description": "GitHub 加速 · 智能节点版：MV3 浏览器扩展（零构建，ESM + Biome 规范）",
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "check": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.2"
+  }
+}
