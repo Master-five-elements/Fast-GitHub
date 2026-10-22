@@ -6,9 +6,11 @@
  */
 
 import { FGNet } from "./lib/net.js";
+import { decideRoute, HOST_PROFILES } from "./lib/routes.js";
 import { FGStore, matchSensitive } from "./lib/store.js";
 
 const ALARM_SYNC = "fg-node-sync";
+const ALARM_PROBE = "fg-host-probe";
 
 /** 这些错误不代表"打不开"，无需代理 */
 const IGNORED_ERRORS = [
@@ -25,18 +27,6 @@ const failCounter = new Map();
 const privateUrls = new Set();
 /** @type {Set<number>} 等待注入安全提示条的 tabId */
 const bannerPending = new Set();
-
-/**
- * @param {string} url
- * @returns {string}
- */
-function hostOf(url) {
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
 
 /**
  * 是否 GitHub 系域名
@@ -78,20 +68,66 @@ async function syncNodes(reason) {
     return { ok: false, nodes: [], source: "", error: "autoUpdate disabled" };
   }
 
-  const result = await FGNet.fetchRemoteNodes(settings.updateSources, 15000);
+  const repos = FGStore.enabledRepos(settings);
+  const sync = await FGNet.syncAllRepos(settings, repos, 15000);
+  // 自定义源也会作为一个虚拟仓库参与同步，分母要算上它
+  const totalSources =
+    repos.length + (settings.updateSources?.filter(Boolean).length ? 1 : 0);
 
-  if (result.ok) {
+  /** @type {Record<string, number>} */
+  const counts = {};
+  for (const item of sync.results) counts[item.id] = item.count;
+
+  if (sync.okCount) {
+    const merged = FGStore.mergeStats(
+      FGStore.allNodes({ ...settings, remoteNodes: sync.nodes }),
+    );
     await FGStore.set({
-      remoteNodes: FGStore.dedupe(result.nodes),
+      remoteNodes: sync.nodes,
+      repoCounts: counts,
       lastUpdate: Date.now(),
-      lastUpdateMessage: `已同步 ${result.nodes.length} 个节点 · ${hostOf(result.source)}`,
+      lastUpdateMessage: `已同步 ${sync.okCount}/${totalSources} 个源 · 去重后 ${merged.unique} 个节点`,
     });
   } else {
     await FGStore.set({
-      lastUpdateMessage: `同步失败：${String(result.error).slice(0, 140)}`,
+      repoCounts: counts,
+      lastUpdateMessage: `同步失败：${String(sync.results[0]?.error ?? "").slice(0, 140)}`,
     });
   }
-  return result;
+  return { ok: sync.okCount > 0, ...sync };
+}
+
+/**
+ * 探测各 GitHub 域名的直连连通性，供路由决策使用。
+ * 本机网络呈间歇性中断（实测：浏览器内 web 59ms 可达，service worker 单次采样却 5s 超时），
+ * 因此每个域名最多探测 2 轮，任一轮成功即判可达，避免偶发抖动把可用域名误判为不可达。
+ */
+async function runProbes() {
+  const settings = await FGStore.get();
+  const probes = { ...(settings.probes ?? {}) };
+
+  await Promise.all(
+    HOST_PROFILES.map(async (profile) => {
+      /** @type {{ reachable: boolean; latency: number } | null} */
+      let best = null;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const result = await FGNet.probeHost(profile.probe, 4000);
+        if (result.reachable) {
+          best = result;
+          break;
+        }
+        if (!best || result.latency < best.latency) best = result;
+      }
+      probes[profile.id] = {
+        reachable: Boolean(best?.reachable),
+        latency: best?.latency ?? 0,
+        ts: Date.now(),
+      };
+    }),
+  );
+
+  await FGStore.set({ probes });
+  return probes;
 }
 
 /** 按当前设置重建定时同步任务 */
@@ -103,6 +139,15 @@ async function scheduleSync() {
   await chrome.alarms.create(ALARM_SYNC, {
     delayInMinutes: 1,
     periodInMinutes: hours * 60,
+  });
+}
+
+/** 每 6 小时重新探测域名连通性，路由决策始终基于近期数据 */
+async function scheduleProbes() {
+  await chrome.alarms.clear(ALARM_PROBE);
+  await chrome.alarms.create(ALARM_PROBE, {
+    delayInMinutes: 2,
+    periodInMinutes: 360,
   });
 }
 
@@ -181,18 +226,13 @@ chrome.webNavigation.onErrorOccurred.addListener(
     if (!details.url || !isGithubHost(details.url)) return;
     if (IGNORED_ERRORS.includes(details.error)) return;
 
-    const settings = await FGStore.get();
-    if (settings.protectSensitive && isSensitiveUrl(details.url, settings)) {
-      console.warn("[FastGitHub] 敏感页面不做自动代理:", details.url);
-      return;
-    }
-
     const key = `${details.tabId}|${details.url}`;
     const tries = (failCounter.get(key) ?? 0) + 1;
     failCounter.set(key, tries);
     if (tries > 2) return;
 
     console.info("[FastGitHub] 检测到加载失败:", details.error, details.url);
+    // 敏感页面检查在 autoProxyTab 内统一处理
     await autoProxyTab(details.tabId, details.url);
   },
   { url: [{ hostSuffix: "github.com" }, { hostSuffix: "githubusercontent.com" }] },
@@ -274,11 +314,126 @@ async function translateText(content) {
 
 /* ------------------------------- 消息 ------------------------------- */
 
+/**
+ * 所有消息处理函数。返回 Promise 或同步执行均可，统一由下面的 listener 兜底。
+ * @type {Record<string, (msg: any, reply: (payload: unknown) => void) => unknown>}
+ */
+const HANDLERS = {
+  translate: async (msg, reply) => {
+    const [data, error] = await translateText(msg.content);
+    reply({ content: data ?? error ?? "" });
+  },
+
+  getSettings: async (_msg, reply) => {
+    reply({ ok: true, settings: await FGStore.get() });
+  },
+
+  setSettings: async (msg, reply) => {
+    const settings = await FGStore.set(msg.patch ?? {});
+    await scheduleSync();
+    reply({ ok: true, settings });
+  },
+
+  syncNodes: async (_msg, reply) => {
+    const result = await syncNodes("manual");
+    await scheduleSync();
+    reply({ ok: Boolean(result.ok), result });
+  },
+
+  testNode: async (msg, reply) => {
+    const settings = await FGStore.get();
+    const result = await FGNet.testNode(msg.value, settings.speedTestUrl, {
+      withSpeed: msg.withSpeed !== false,
+    });
+    await FGStore.saveStat(msg.value, result.latency, result.speed);
+    reply({ ok: true, result });
+  },
+
+  testNodes: async (msg, reply) => {
+    const settings = await FGStore.get();
+    /** @type {any[]} */
+    const results = [];
+    for (const value of msg.values ?? []) {
+      const result = await FGNet.testNode(value, settings.speedTestUrl, {
+        withSpeed: msg.withSpeed !== false,
+      });
+      await FGStore.saveStat(value, result.latency, result.speed);
+      results.push(result);
+    }
+    reply({ ok: true, results });
+  },
+
+  proxyTab: async (msg, reply) => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) {
+      reply({ ok: false, error: "no tab" });
+      return;
+    }
+    const settings = await FGStore.get();
+    const source = tab.url ?? msg.url;
+
+    if (settings.protectSensitive && isSensitiveUrl(source, settings)) {
+      reply({
+        ok: false,
+        blocked: true,
+        error: "该页面属于登录 / 账号 / 私有内容，已拒绝代理以保护凭证安全",
+      });
+      return;
+    }
+
+    const node = msg.node ?? FGStore.bestNode(settings) ?? settings.fallbackNode;
+    const url = FGStore.buildProxyUrl(node, source);
+    bannerPending.add(tab.id);
+    await chrome.tabs.update(tab.id, { url });
+    reply({ ok: true, url });
+  },
+
+  probeHosts: async (_msg, reply) => {
+    reply({ ok: true, probes: await runProbes() });
+  },
+
+  route: async (msg, reply) => {
+    const settings = await FGStore.get();
+    const decision = decideRoute(msg.url, { settings, probes: settings.probes });
+    reply({ ok: true, decision });
+  },
+
+  recordUsage: async (msg, reply) => {
+    await FGStore.recordUsage(msg.value, Boolean(msg.ok), Number(msg.ms) || 0);
+    reply({ ok: true });
+  },
+
+  probeCapabilities: async (msg, reply) => {
+    const result = await FGNet.probeCapabilities(msg.value, 8000);
+    const settings = await FGStore.get();
+    await FGStore.set({
+      capabilities: { ...(settings.capabilities ?? {}), [msg.value]: result },
+    });
+    reply({ ok: true, result });
+  },
+
+  checkSensitive: async (msg, reply) => {
+    const settings = await FGStore.get();
+    reply({
+      blocked: Boolean(settings.protectSensitive && isSensitiveUrl(msg.url, settings)),
+    });
+  },
+
+  markPrivate: (msg, reply) => {
+    if (msg.url) privateUrls.add(msg.url);
+    reply({ ok: true });
+  },
+};
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const msg = message ?? {};
+  // 兼容旧版：带 content 字段即视为翻译请求
   const type = msg.type ?? (msg.content !== undefined ? "translate" : "");
+  const handler = HANDLERS[type];
+  if (!handler) return false;
 
-  const reply = (/** @type {unknown} */ payload) => {
+  /** @param {unknown} payload */
+  const reply = (payload) => {
     try {
       sendResponse(payload);
     } catch {
@@ -286,124 +441,33 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
   };
 
-  if (type === "translate") {
-    translateText(msg.content).then(([data, error]) => {
-      reply({ content: data ?? error ?? "" });
-    });
-    return true;
-  }
-
-  if (type === "getSettings") {
-    FGStore.get().then((settings) => reply({ ok: true, settings }));
-    return true;
-  }
-
-  if (type === "setSettings") {
-    FGStore.set(msg.patch ?? {}).then(async (settings) => {
-      await scheduleSync();
-      reply({ ok: true, settings });
-    });
-    return true;
-  }
-
-  if (type === "syncNodes") {
-    syncNodes("manual").then(async (result) => {
-      await scheduleSync();
-      reply({ ok: Boolean(result.ok), result });
-    });
-    return true;
-  }
-
-  if (type === "testNode") {
-    (async () => {
-      const settings = await FGStore.get();
-      const result = await FGNet.testNode(msg.value, settings.speedTestUrl, {
-        withSpeed: msg.withSpeed !== false,
-      });
-      await FGStore.saveStat(msg.value, result.latency, result.speed);
-      reply({ ok: true, result });
-    })();
-    return true;
-  }
-
-  if (type === "testNodes") {
-    (async () => {
-      const settings = await FGStore.get();
-      /** @type {any[]} */
-      const results = [];
-      for (const value of msg.values ?? []) {
-        const result = await FGNet.testNode(value, settings.speedTestUrl, {
-          withSpeed: msg.withSpeed !== false,
-        });
-        await FGStore.saveStat(value, result.latency, result.speed);
-        results.push(result);
-      }
-      reply({ ok: true, results });
-    })();
-    return true;
-  }
-
-  if (type === "proxyTab") {
-    (async () => {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) {
-        reply({ ok: false, error: "no tab" });
-        return;
-      }
-      const settings = await FGStore.get();
-      const source = tab.url ?? msg.url;
-
-      if (settings.protectSensitive && isSensitiveUrl(source, settings)) {
-        reply({
-          ok: false,
-          blocked: true,
-          error: "该页面属于登录 / 账号 / 私有内容，已拒绝代理以保护凭证安全",
-        });
-        return;
-      }
-
-      const node = msg.node ?? FGStore.bestNode(settings) ?? settings.fallbackNode;
-      const url = FGStore.buildProxyUrl(node, source);
-      bannerPending.add(tab.id);
-      await chrome.tabs.update(tab.id, { url });
-      reply({ ok: true, url });
-    })();
-    return true;
-  }
-
-  if (type === "checkSensitive") {
-    FGStore.get().then((settings) =>
-      reply({
-        blocked: Boolean(settings.protectSensitive && isSensitiveUrl(msg.url, settings)),
-      }),
-    );
-    return true;
-  }
-
-  if (type === "markPrivate") {
-    if (msg.url) privateUrls.add(msg.url);
-    reply({ ok: true });
-    return true;
-  }
-
-  return false;
+  Promise.resolve(handler(msg, reply)).catch((error) => {
+    console.warn("[FastGitHub] 消息处理失败", type, error);
+    reply({ ok: false, error: String(error) });
+  });
+  return true;
 });
 
 /* ------------------------------ 生命周期 ------------------------------ */
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
+    await scheduleProbes();
     await syncNodes("install");
     await scheduleSync();
     await chrome.runtime.openOptionsPage();
     return;
   }
   await scheduleSync();
+  await scheduleProbes();
+  await runProbes();
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   const settings = await FGStore.get();
   await scheduleSync();
+  await scheduleProbes();
+  await runProbes();
   const hours = Math.max(1, Number(settings.updateIntervalHours) || 24);
   if (Date.now() - (settings.lastUpdate ?? 0) > hours * 3600 * 1000) {
     await syncNodes("startup");
@@ -411,6 +475,10 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === ALARM_PROBE) {
+    await runProbes();
+    return;
+  }
   if (alarm.name !== ALARM_SYNC) return;
   const settings = await FGStore.get();
   const hours = Math.max(1, Number(settings.updateIntervalHours) || 24);
