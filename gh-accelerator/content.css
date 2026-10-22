@@ -1,0 +1,390 @@
+/* ==================================================================
+ * 注入到 GitHub 页面的样式（跟随 GitHub 明暗主题）
+ * ================================================================== */
+
+.fg-speed {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", Helvetica, Arial, sans-serif;
+}
+
+/* ------------------------------ 触发按钮 ------------------------------ */
+
+.fg-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(91, 91, 214, 0.3);
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.fg-trigger:hover {
+  filter: brightness(1.08);
+}
+
+.fg-trigger:active {
+  transform: translateY(1px);
+}
+
+.fg-bolt {
+  font-size: 12px;
+}
+
+.fg-caret {
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+/* ------------------------------ 下拉面板 ------------------------------ */
+
+.fg-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 999;
+  width: 360px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  box-shadow: 0 16px 40px rgba(31, 35, 40, 0.18);
+  display: none;
+}
+
+.fg-panel.is-open {
+  display: block;
+}
+
+.fg-panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2328;
+}
+
+.fg-panel-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #818b98;
+}
+
+.fg-chan {
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: #f6f8fa;
+  border: 1px solid #eaeef2;
+}
+
+.fg-chan-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.fg-chan-name {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #1f2328;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fg-chan-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+}
+
+.fg-chan-lat {
+  margin-left: auto;
+  font-size: 11px;
+  color: #1a7f37;
+  font-variant-numeric: tabular-nums;
+}
+
+.fg-chan-row {
+  display: flex;
+  gap: 6px;
+}
+
+.fg-chan-input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #d8dee4;
+  border-radius: 7px;
+  background: #fff;
+  color: #1f2328;
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  outline: none;
+}
+
+.fg-chan-input:focus {
+  border-color: #5b5bd6;
+  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.16);
+}
+
+.fg-mini {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d8dee4;
+  border-radius: 7px;
+  background: #fff;
+  color: #1f2328;
+  font-size: 12px;
+  font-weight: 550;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fg-mini:hover {
+  border-color: #5b5bd6;
+  color: #5b5bd6;
+  background: #f2f2ff;
+}
+
+.fg-mini-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  color: #fff;
+}
+
+.fg-mini-primary:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #4f4fd0, #7c4dee);
+}
+
+.fg-panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fg-panel-actions .fg-mini {
+  flex: 1;
+}
+
+/* ------------------------- 文件行按钮（IDE/下载） ------------------------- */
+
+.fg-ide,
+.fg-dl {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px solid #d8dee4;
+  border-radius: 999px;
+  background: #f6f8fa;
+  color: #57606a;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 18px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fg-dl {
+  border-color: transparent;
+  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  color: #fff;
+}
+
+.fg-ide:hover {
+  border-color: #5b5bd6;
+  color: #5b5bd6;
+  background: #f2f2ff;
+}
+
+.fg-dl:hover {
+  filter: brightness(1.08);
+  color: #fff;
+}
+
+/* ----------------------------- Release 加速 ----------------------------- */
+
+.fg-accel {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fg-accel:hover {
+  filter: brightness(1.08);
+  color: #fff !important;
+}
+
+/* ------------------------------- 翻译 ------------------------------- */
+
+.fg-trans {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border: 1px solid #d8dee4;
+  border-radius: 999px;
+  background: #f6f8fa;
+  color: #0969da;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.fg-trans:hover {
+  border-color: #0969da;
+}
+
+.fg-trans-out {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6f8fa;
+  border: 1px solid #eaeef2;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------- 轻提示 ------------------------------- */
+
+#fg-flash {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translate(-50%, 12px);
+  z-index: 100000;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: rgba(31, 35, 40, 0.94);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 550;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.22s ease;
+}
+
+#fg-flash.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ============================ GitHub 深色主题 ============================ */
+
+html[data-color-mode="dark"] .fg-panel,
+html[data-dark-theme="dark"] .fg-panel {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 16px 40px rgba(1, 4, 9, 0.7);
+}
+
+html[data-color-mode="dark"] .fg-panel-title,
+html[data-dark-theme="dark"] .fg-panel-title {
+  color: #e6edf3;
+}
+
+html[data-color-mode="dark"] .fg-chan,
+html[data-dark-theme="dark"] .fg-chan {
+  background: #0d1117;
+  border-color: #30363d;
+}
+
+html[data-color-mode="dark"] .fg-chan-name,
+html[data-dark-theme="dark"] .fg-chan-name {
+  color: #e6edf3;
+}
+
+html[data-color-mode="dark"] .fg-chan-input,
+html[data-dark-theme="dark"] .fg-chan-input {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+html[data-color-mode="dark"] .fg-mini,
+html[data-dark-theme="dark"] .fg-mini {
+  background: #21262d;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+html[data-color-mode="dark"] .fg-ide,
+html[data-dark-theme="dark"] .fg-ide {
+  background: #21262d;
+  border-color: #30363d;
+  color: #b1bac4;
+}
+
+html[data-color-mode="dark"] .fg-trans,
+html[data-dark-theme="dark"] .fg-trans {
+  background: #21262d;
+  border-color: #30363d;
+  color: #58a6ff;
+}
+
+html[data-color-mode="dark"] .fg-trans-out,
+html[data-dark-theme="dark"] .fg-trans-out {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-panel {
+    background: #161b22;
+    border-color: #30363d;
+  }
+  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-panel-title {
+    color: #e6edf3;
+  }
+  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-chan {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-chan-input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-mini {
+    background: #21262d;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+}
