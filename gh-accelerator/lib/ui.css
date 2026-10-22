@@ -220,19 +220,18 @@ body.fg-body {
     box-shadow 0.16s var(--fg-ease);
 }
 
-.fg-input:focus,
-.fg-select:focus,
-.fg-textarea:focus {
-  border-color: var(--fg-accent);
-  box-shadow: 0 0 0 4px var(--fg-accent-soft);
-}
-
 .fg-textarea {
   min-height: 96px;
   resize: vertical;
   line-height: 1.65;
 }
 
+.fg-input:focus,
+.fg-select:focus,
+.fg-textarea:focus {
+  border-color: var(--fg-accent);
+  box-shadow: 0 0 0 4px var(--fg-accent-soft);
+}
 .fg-hint {
   margin-top: 6px;
   font-size: 12px;
