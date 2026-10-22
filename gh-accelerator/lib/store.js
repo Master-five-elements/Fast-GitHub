@@ -13,6 +13,8 @@ import { DEFAULT_REPO_IDS, NODE_REPOS } from "./repos.js";
  * @property {boolean} [builtin]
  * @property {boolean} [custom]
  * @property {boolean} [disabled]
+ * @property {"full" | "download"} [kind] full=可加速仓库；download=仅下载文件
+ * @property {string[]} [sources] 出现在哪些节点仓库
  */
 
 /**
@@ -42,9 +44,6 @@ import { DEFAULT_REPO_IDS, NODE_REPOS } from "./repos.js";
  * @property {NodeEntry[]} remoteNodes
  * @property {string[]} disabledNodes
  * @property {Record<string, NodeStat>} stats
- * @property {string} webIDE
- * @property {string} token
- * @property {string} language
  * @property {"system" | "light" | "dark"} theme
  */
 
@@ -133,9 +132,8 @@ const DEFAULTS = {
   probes: {},
   capabilities: {},
   usage: {},
-  webIDE: "GitHub1s.Com",
-  token: "",
-  language: "nothing",
+  /** 节点能力分类：full = 可加速仓库（支持 clone）；download = 仅下载文件 */
+  nodeKinds: {},
   theme: "system",
 };
 
@@ -170,7 +168,31 @@ function normalize(node) {
     label: node?.label ?? "custom",
     builtin: Boolean(node?.builtin),
     custom: Boolean(node?.custom),
+    kind: node?.kind,
   };
+}
+
+/**
+ * 泛化标签：内置节点库统一用这两个词，信息量低于仓库给出的具体名称。
+ * 合并时优先保留具体名称。
+ */
+const GENERIC_LABELS = new Set([
+  "contribute",
+  "search",
+  "remote",
+  "custom",
+  "builtin",
+  "node",
+]);
+
+/**
+ * @param {string} next
+ * @param {string} current
+ * @returns {boolean}
+ */
+function isBetterLabel(next, current) {
+  if (!next) return false;
+  return !GENERIC_LABELS.has(next) && GENERIC_LABELS.has(current);
 }
 
 /**
@@ -195,6 +217,10 @@ function dedupe(list) {
       for (const source of sources) prev.sources.add(source);
       prev.builtin = prev.builtin || entry.builtin;
       prev.custom = prev.custom || entry.custom;
+      // 标签优先取具体名称（内置的 contribute/search 让位给仓库标签）
+      if (isBetterLabel(entry.label, prev.label)) prev.label = entry.label;
+      // 能力分类：已确定的结论不被泛化值覆盖
+      if (entry.kind && (!prev.kind || prev.kind === "full")) prev.kind = entry.kind;
       continue;
     }
 
@@ -235,18 +261,58 @@ export function mergeStats(list) {
 }
 
 /**
- * 用某个仓库的最新节点替换列表中同来源的旧数据
- * @param {{ source?: string }[]} list
+ * 用某个仓库的最新节点替换列表中同来源的旧数据。
+ *
+ * 节点可能已被去重合并（sources 含多个仓库）。此时：
+ * - 先把该节点从旧列表移除，并把「除本仓库外的其他来源」记录下来；
+ * - 若本仓库的新清单仍收录它，把其他来源一并写回新条目（sources 不丢）；
+ * - 若本仓库已下架它但其他仓库仍收录，则按剩余来源保留，避免节点被误删。
+ * @param {{ source?: string; sources?: string[]; value: string; label?: string }[]} list
  * @param {string} repoId
  * @param {{ value: string; label?: string }[]} nodes
  */
 export function replaceRepoNodes(list, repoId, nodes) {
-  const others = (list ?? []).filter((item) => item?.source !== repoId);
-  const fresh = (nodes ?? []).map((item) => ({
-    value: nodeKey(item?.value),
-    label: item?.label ?? "remote",
-    source: repoId,
-  }));
+  /** @type {Map<string, { sources: string[]; label?: string }>} */
+  const carry = new Map();
+  /** @type {any[]} */
+  const others = [];
+
+  for (const item of list ?? []) {
+    const sources = item?.sources ?? [];
+    if (item?.source === repoId) continue; // 单来源节点：整体替换
+    if (sources.includes(repoId)) {
+      const rest = sources.filter((s) => s !== repoId);
+      if (rest.length) carry.set(item.value, { sources: rest, label: item.label });
+      continue;
+    }
+    others.push(item);
+  }
+
+  /** @type {Set<string>} */
+  const freshKeys = new Set();
+  const fresh = (nodes ?? []).map((item) => {
+    const value = nodeKey(item?.value);
+    freshKeys.add(value);
+    const extra = carry.get(value);
+    return {
+      value,
+      label: item?.label ?? "remote",
+      source: repoId,
+      ...(extra ? { sources: [...extra.sources] } : {}),
+    };
+  });
+
+  // 本仓库下架、但其他仓库仍收录的节点：按剩余来源保留
+  for (const [value, info] of carry) {
+    if (freshKeys.has(value)) continue;
+    others.push({
+      value,
+      label: info.label ?? "remote",
+      sources: info.sources,
+      source: info.sources[0],
+    });
+  }
+
   return [...others, ...fresh];
 }
 
@@ -393,15 +459,61 @@ export function bestNode(settings) {
 }
 
 /**
- * 首页展示的通道列表
+ * 节点能力分类。
+ * - `full`：可加速仓库（支持 clone / git smart HTTP）
+ * - `download`：仅下载文件（raw / release / archive），不能加速仓库
+ *
+ * 判定优先级：用户手动标注 > 运行时能力探测 > 节点自带分类（来自仓库清单）> 默认 full
+ * @param {Settings} [settings]
+ * @param {string} value
+ * @returns {"full" | "download"}
+ */
+export function kindOf(settings, value) {
+  const s = settings ?? DEFAULTS;
+  const key = nodeKey(value);
+  const manual = s.nodeKinds?.[key];
+  if (manual === "full" || manual === "download") return manual;
+  // 运行时探测过：不支持 git smart HTTP 的即为下载专用
+  if (s.capabilities?.[key] && s.capabilities[key].git === false) return "download";
+  // 节点自带分类（仓库清单给出，合并时 download 优先）
+  const node = allNodes(s).find((n) => n.value === key);
+  if (node?.kind === "download") return "download";
+  return "full";
+}
+
+/**
+ * 设置节点能力分类（手动标注）
+ * @param {string} value
+ * @param {"full" | "download"} kind
+ */
+export async function setNodeKind(value, kind) {
+  const s = await get();
+  const key = nodeKey(value);
+  const nodeKinds = { ...(s.nodeKinds ?? {}) };
+  if (kind === "full" || kind === "download") {
+    nodeKinds[key] = kind;
+  } else {
+    delete nodeKinds[key];
+  }
+  return await set({ nodeKinds });
+}
+
+/**
+ * 首页展示的通道列表。
  * @param {Settings} [settings]
  * @param {number} [count]
+ * @param {"full" | "download"} [kind] 只返回该能力的节点；不传则不限
  * @returns {string[]}
  */
-export function channels(settings, count) {
+export function channels(settings, count, kind) {
   const s = settings ?? DEFAULTS;
   const n = Math.max(1, Math.min(count ?? s.channelCount ?? 3, 10));
-  const list = rankedNodes(s);
+  let list = rankedNodes(s);
+  if (kind) list = list.filter((item) => kindOf(s, item.value) === kind);
+  if (!list.length) {
+    // 没有符合能力的节点时退化为不限能力，避免无通道可用
+    list = rankedNodes(s);
+  }
   if (!list.length) return [s.fallbackNode || "gh-proxy.com"];
   return list.slice(0, n).map((item) => item.value);
 }
@@ -482,9 +594,6 @@ export async function get() {
       ]);
     }
     if (migrated.length) settings.customNodes = /** @type {NodeEntry[]} */ (migrated);
-    if (old?.token) settings.token = old.token;
-    if (old?.language) settings.language = old.language;
-    if (old?.webIDE) settings.webIDE = old.webIDE;
 
     await chrome.storage.local.set({ [KEY]: settings });
   }
@@ -546,4 +655,6 @@ export const FGStore = {
   normalize,
   healthOf,
   recordUsage,
+  kindOf,
+  setNodeKind,
 };
