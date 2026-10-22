@@ -31,14 +31,13 @@ DEFAULT_OWNER = "Master-five-elements"
 DEFAULT_REPO = "Fast-GitHub"
 DEFAULT_BRANCH = "main"
 COMMIT_MESSAGE = (
-    "feat(gh-accelerator): 新增现代化 MV3 扩展 v2.1.0\n\n"
-    "- 接入 hubporg/ghproxy-next 的 81 个社区公益加速节点\n"
-    "- 每 24 小时自动同步节点，多镜像源依次降级\n"
-    "- 新增节点测速（延迟 + 真实带宽）并按结果自动择优\n"
-    "- github.com 加载失败时自动跳转到代理节点\n"
-    "- 登录页/账号设置/私有仓库永不代理，代理页注入安全提示条\n"
-    "- 全新设计系统 UI：侧边栏导航、节点卡片、深色模式\n"
-    "- 零构建原生 MV3，可直接加载已解压扩展"
+    "feat(gh-accelerator): 发布 v2.3.1 智能路由版\n\n"
+    "- 新增 jsDelivr CDN 通道与按域名智能路由（lib/routes.js）\n"
+    "- 域名连通性探测：两轮重试 + 每 6 小时定期探测\n"
+    "- 节点能力探测（Range / git smart HTTP）与健康度评分\n"
+    "- 设置页自定义节点源接入同步，清空即移除\n"
+    "- 代码精简：消息处理映射表与共用助手（fetchWithTimeout/headProbe/rankedNodes）\n"
+    "- 新增 legacy/ 过往版本存档，删除旧版 zip/ 打包目录"
 )
 
 SKIP_DIRS = {"__pycache__", ".git"}
@@ -88,13 +87,13 @@ def existing_sha(owner, repo, path, branch, token):
     return None
 
 
-def upload_file(owner, repo, branch, token, rel_path, abs_path, retries=2):
+def upload_file(owner, repo, branch, token, rel_path, abs_path, retries=2, message=None):
     with open(abs_path, "rb") as f:
         raw = f.read()
     content = base64.b64encode(raw).decode("ascii")
 
     payload = {
-        "message": COMMIT_MESSAGE,
+        "message": message or COMMIT_MESSAGE,
         "content": content,
         "branch": branch,
     }
@@ -124,6 +123,8 @@ def main():
     parser.add_argument("--repo", default=DEFAULT_REPO)
     parser.add_argument("--branch", default=DEFAULT_BRANCH)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--only", default="", help="只上传指定相对路径，逗号分隔")
+    parser.add_argument("--message", default="", help="自定义提交信息")
     args = parser.parse_args()
 
     if not os.path.isdir(SOURCE_DIR):
@@ -131,6 +132,9 @@ def main():
         return 1
 
     files = collect_files(SOURCE_DIR)
+    if args.only:
+        wanted = {p.strip() for p in args.only.split(",") if p.strip()}
+        files = [f for f in files if f[0] in wanted]
     print("待上传 %d 个文件 -> %s/%s@%s\n" % (len(files), args.owner, args.repo, args.branch))
 
     if args.dry_run:
@@ -146,7 +150,8 @@ def main():
     for i, (rel, full) in enumerate(files, 1):
         print("[%2d/%d] %s" % (i, len(files), rel))
         success, info = upload_file(
-            args.owner, args.repo, args.branch, args.token, rel, full
+            args.owner, args.repo, args.branch, args.token, rel, full,
+            message=args.message or None,
         )
         if success:
             ok += 1
