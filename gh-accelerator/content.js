@@ -1,6 +1,6 @@
 /**
  * GitHub 页面注入脚本（ES Module）
- * 加速通道 / 下载 ZIP / 单文件下载 / Release 加速 / Web IDE / Issue 翻译
+ * 加速通道 / 下载 ZIP / 单文件下载 / Release 加速
  */
 
 /**
@@ -181,9 +181,11 @@ function renderSpeedButton() {
     document.querySelector("div.Box div.d-flex");
   if (!anchor) return;
 
-  const list = store.channels(settings, settings.channelCount);
+  // 通道列表用于 clone，只取「可加速仓库」的节点（下载专用节点不能 clone）
+  const list = store.channels(settings, settings.channelCount, "full");
   const best = store.bestNode(settings);
   const total = store.activeNodes(settings).length;
+  const fullCount = list.filter((n) => store.kindOf(settings, n) === "full").length;
 
   const wrap = document.createElement("div");
   wrap.id = SPEED_ID;
@@ -216,14 +218,24 @@ function renderSpeedButton() {
     </button>
     <div class="fg-panel">
       <div class="fg-panel-title">
-        可用通道<span class="fg-panel-sub">共 ${total} 个节点</span>
+        可加速仓库的通道<span class="fg-panel-sub">共 ${fullCount} 个可用 · 全部 ${total} 个</span>
       </div>
-      ${items}
+      ${
+        fullCount === 0
+          ? '<div class="fg-panel-empty">没有可加速仓库的节点，请先测速或检查节点仓库</div>'
+          : items
+      }
       <div class="fg-panel-actions">
         <button class="fg-mini fg-mini-primary" type="button" id="fg-zip">下载 ZIP</button>
         <button class="fg-mini" type="button" id="fg-zip-copy">复制 ZIP 链接</button>
       </div>
-    </div>`;
+      <a
+        class="fg-panel-feedback"
+        href="https://github.com/Master-five-elements/Fast-GitHub/issues"
+        target="_blank"
+        rel="noopener"
+        >💬 反馈问题 / 节点失效</a
+      >`;
 
   anchor.appendChild(wrap);
 
@@ -270,18 +282,10 @@ function renderSpeedButton() {
   });
 }
 
-/** 文件树：Web IDE 入口 + 单文件下载 */
-function addIdeAndDownload() {
+/** 文件树：单文件经加速节点下载（核心加速功能，常驻） */
+function addFileDownload() {
   const rows = document.querySelectorAll('div[role="row"], div.js-navigation-item');
   if (!rows.length) return;
-
-  const webIDE = settings.webIDE;
-  const ideHost =
-    webIDE === "GitHub.Dev"
-      ? "github.dev"
-      : webIDE === "GitHub1s.Com"
-        ? "github1s.com"
-        : "";
 
   for (const row of rows) {
     if (row.classList.contains(ROW_FLAG)) continue;
@@ -292,17 +296,6 @@ function addIdeAndDownload() {
     if (!href) continue;
 
     const holder = row.querySelector('div[role="gridcell"]:last-child') ?? row;
-
-    if (ideHost && !row.querySelector(".fg-ide")) {
-      const ide = document.createElement("a");
-      ide.className = "fg-ide";
-      ide.href = `https://${ideHost}${href}`;
-      ide.target = "_blank";
-      ide.rel = "noopener";
-      ide.title = "使用 Web IDE 查看";
-      ide.textContent = "IDE";
-      holder.appendChild(ide);
-    }
 
     if (row.querySelector(".fg-dl")) continue;
     const download = document.createElement("button");
@@ -349,35 +342,7 @@ function addReleaseAccel() {
   }
 }
 
-/** Issue / PR：一键翻译 */
-function addTranslate() {
-  if (!settings.token || settings.language === "nothing") return;
-  const blocks = document.querySelectorAll("td.d-block.comment-body, .comment-body");
-  for (const block of blocks) {
-    if (block.querySelector(".fg-trans")) continue;
-    const button = document.createElement("button");
-    button.className = "fg-trans";
-    button.type = "button";
-    button.textContent = "翻译";
-    button.addEventListener("click", async () => {
-      const existing = block.parentElement?.querySelector(".fg-trans-out");
-      if (existing) {
-        existing.remove();
-        button.textContent = "翻译";
-        return;
-      }
-      button.textContent = "翻译中…";
-      const text = (block.textContent ?? "").slice(0, 1500);
-      const res = await chrome.runtime.sendMessage({ content: text });
-      button.textContent = "收起译文";
-      const out = document.createElement("div");
-      out.className = "fg-trans-out";
-      out.textContent = res?.content || "翻译失败";
-      block.parentElement?.appendChild(out);
-    });
-    block.appendChild(button);
-  }
-}
+/** Issue / PR：一键翻译（已移除页面增强模块） */
 
 async function main() {
   await ensureLibs();
@@ -402,14 +367,11 @@ async function main() {
   const pageType = parts[2];
   if (!pageType || pageType === "tree") {
     renderSpeedButton();
-    addIdeAndDownload();
+    addFileDownload();
   }
   if (pageType === "releases" || pageType === "tags") {
     addReleaseAccel();
     renderSpeedButton();
-  }
-  if (pageType === "issues" || pageType === "pull") {
-    addTranslate();
   }
 }
 
