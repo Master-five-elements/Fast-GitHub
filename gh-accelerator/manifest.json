@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub 加速 · 智能节点版",
+  "version": "2.1.0",
+  "description": "内置 80+ 公益加速节点，24 小时自动更新，支持节点测速；GitHub 打不开时自动走 gh-proxy 节点代理。",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "GitHub 加速",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms", "webNavigation", "scripting"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["*://github.com/*"],
+      "js": ["lib/default-nodes.js", "lib/store.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
