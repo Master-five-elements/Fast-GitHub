@@ -28,16 +28,24 @@ npm run lint     # Biome 检查（format + lint + assist）
 
 ### 1. 多仓库节点同步（每 24 小时）
 
-精选 3 个近期活跃的 GitHub 国内加速节点仓库，可在设置页单独开关：
+精选 **8 个**近期活跃的 GitHub 国内加速节点仓库，可在设置页单独开关。每个仓库按自己的清单格式解析，节点自动标注**能力分类**：
+- **可加速仓库（full）**：支持 `clone` / git smart HTTP，也能下载文件
+- **仅下载专用（download）**：只能下载文件（raw / release / archive），不能加速仓库 clone
 
-| 仓库                                                              | 清单文件                | 说明                         |
-| ----------------------------------------------------------------- | ----------------------- | ---------------------------- |
-| [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next)   | `components/nodes.ts`   | 社区公益加速节点，内置 81 个 |
-| [clion007/adss](https://github.com/clion007/adss)                 | `ghnodes/ghnodes.ini`   | 纯文本清单，一行一个域名     |
-| [lopinnn56/github-fast](https://github.com/lopinnn56/github-fast) | `src/lib/nodes-core.js` | `name` / `prefix` 结构节点表 |
+| 仓库                                                                                    | 清单格式        | 默认分类      | 说明                                                |
+| --------------------------------------------------------------------------------------- | --------------- | ------------- | --------------------------------------------------- |
+| [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next)                         | `{label,value}` | full          | 社区公益加速节点主清单，附测速实现                  |
+| [clion007/adss](https://github.com/clion007/adss)                                       | 纯文本域名      | full          | 一行一个域名的节点清单                              |
+| [lopinnn56/github-fast](https://github.com/lopinnn56/github-fast)                       | `name/prefix`   | full          | 内置节点表（name / prefix 结构）                    |
+| [mihsian77/MirrorHub](https://github.com/mihsian77/MirrorHub)                           | 自带分类        | full+download | 自动发现 / 测速 / 清理，自带能力分类                |
+| [triwinds/ns-emu-tools](https://github.com/triwinds/ns-emu-tools)                       | download/raw    | download      | 区分下载镜像与 raw 镜像                             |
+| [XIU2/UserScript](https://github.com/XIU2/UserScript)                                   | 文本提取域名    | download      | GithubEnhanced 高速下载油猴脚本内置镜像（原始出处） |
+| [RC1844/FastGithub](https://github.com/RC1844/FastGithub)                               | 三元组          | full          | 快速跳转 GitHub 镜像站的油猴脚本                    |
+| [KotobaWakusei/GitHubMirrorPlugin](https://github.com/KotobaWakusei/GitHubMirrorPlugin) | 文本提取域名    | full          | 自动测速选择最快镜像的插件配置                      |
 - `chrome.alarms` 定时触发，默认 **24 小时**（可改，最小 1 小时）
 - 每个仓库配 4 个镜像依次降级：jsdelivr → fastly.jsdelivr → gh-proxy 代理的 raw → raw 直连
-- 解析器兼容 4 种形态：`{label,value}`、`{name,prefix}`、JSON 数组（`value`/`domain`/`host`/`url`）、纯文本域名
+- 解析器兼容 **8 种**形态：`{label,value}`、`{name,prefix}`、纯文本域名、JSON 数组（含 `value`/`domain`/`host`/`url`/`prefix`）、MirrorHub 的 `nodes.json`、ns-emu-tools 的 `github_mirrors.json`、FastGithub 的 `MirrorUrl` 三元组、以及兜底地从任意文本提取 `https://` 域名
+- 仓库首页的「加速」下拉**只使用「可加速仓库」类节点**做 clone 通道；下载类节点由下载 / Release 加速按需使用
 - 设置页的「**自定义节点源**」文本框可追加任意清单地址，与上方仓库合并同步；该列表是权威的——清空后同步会移除之前来自自定义源的节点
 
 ### 2. 重复节点查重合并
@@ -90,22 +98,22 @@ npm run lint     # Biome 检查（format + lint + assist）
 - 私有仓库被访问时由内容脚本自动上报，加入运行时永不代理名单
 - 弹窗的「一键代理 / 复制链接」对命中规则的地址直接拒绝
 
-### 7. 页面增强
+### 7. GitHub 页面注入
 
-- 仓库首页 / 目录页：⚡**加速**下拉，多条通道的 clone 地址一键复制、下载 ZIP
-- 文件树：Web IDE 入口 + 单文件下载（走节点拉 raw）
+- 仓库首页 / 目录页：⚡**加速**下拉，多条「可加速仓库」通道的 clone 地址一键复制、下载 ZIP
+- 文件树：单文件经加速节点下载（经 raw 通道拉取）
 - Releases / Tags：每个产物旁追加「加速下载」
-- Issue / PR：可选腾讯 AI 翻译（需自填 Token）
+
+> 注：早期版本的「页面增强」模块（Web IDE 入口、Issue 翻译）已移除，聚焦核心加速能力。
 
 ---
 
 ## UI
 
-2026 设计语言：
-- 大圆角（12 / 18px）、多层柔和阴影、渐变强调色（indigo → violet → cyan）
-- 玻璃态顶栏与侧边栏（`backdrop-filter`）
-- Bento 风格概览卡片，悬停微上浮
-- 按钮按压反馈、面板入场动画、Toast 提示
+星露谷素风（Stardew Valley cozy / rustic）：
+- 暖色羊皮纸与木色调，粗边框 + 无模糊的硬阴影（2~3px 实色投影），质朴圆角
+- 森林绿侧边栏 + 蜜黄 / 河蓝点缀，深浅色主题均适配
+- 按钮「抬起 / 按下」的硬阴影位移反馈，注入面板自带不透明羊皮纸底，不依赖 GitHub 主题
 - 完整的深浅色主题，注入元素也跟随 GitHub 自身的明暗模式
 
 ---
@@ -133,7 +141,7 @@ gh-accelerator/
 ├─ content.css
 ├─ lib/
 │  ├─ nodes.js            # 内置 81 个节点（由 tools/gen_nodes.py 生成）
-│  ├─ repos.js            # 节点仓库源定义（3 个仓库 + 镜像降级）
+│  ├─ repos.js            # 节点仓库源定义（8 个仓库 + 镜像降级 + 能力分类）
 │  ├─ routes.js           # 域名画像、jsDelivr 转换、路由决策
 │  ├─ store.js            # 设置仓库、节点择优、健康度、白名单匹配
 │  ├─ net.js              # 远端同步 + 测速 + 域名探测 + 能力探测
@@ -155,9 +163,9 @@ node tools/smoke_test.mjs    # 逻辑层：节点合并/择优/白名单匹配/�
 NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js   # 真实浏览器
 ```
 
-端到端测试用 `puppeteer-core` 驱动本机 Edge 真实加载扩展，覆盖 31 项：扩展加载与 service worker 激活、设置页 81 个节点渲染、3 个节点仓库渲染与开关、白名单增删改与自检、**路由页域名真实探测与路由自检**、background(ESM) 消息响应、弹窗渲染、**content script 在模拟 GitHub 页面真实注入加速按钮**。
+端到端测试用 `puppeteer-core` 驱动本机 Edge 真实加载扩展，覆盖 35 项：扩展加载与 service worker 激活、设置页 81 个节点渲染、8 个节点仓库渲染与开关、白名单增删改与自检、**路由页域名真实探测与路由自检**、background(ESM) 消息响应、弹窗渲染、**content script 在模拟 GitHub 页面真实注入加速按钮**。
 
-此外另跑过一轮**消息处理器全覆盖**验证（14 个 handler 逐一真实调用）：getSettings / setSettings / route / checkSensitive / recordUsage / markPrivate / probeHosts / testNode / probeCapabilities 全部正常，未知消息正确放行，旧版「带 content 即翻译」的兼容路径保留。实测 `testNode("gh-proxy.com")` 延迟 1959ms，`probeCapabilities` 返回 `{range:false, git:true}`（该节点支持 git smart HTTP、不支持 Range）。
+此外另跑过一轮**消息处理器全覆盖**验证：getSettings / setSettings / route / checkSensitive / recordUsage / markPrivate / probeHosts / testNode / probeCapabilities 全部正常，未知消息正确放行。实测 `testNode("gh-proxy.com")` 延迟 1959ms，`probeCapabilities` 返回 `{range:false, git:true}`（该节点支持 git smart HTTP、不支持 Range）。
 
 真实网络下的探测与路由结果（本机实测）：
 
@@ -171,6 +179,20 @@ NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js   # 真实浏览�
 ```
 
 ---
+
+## 反馈
+
+扩展内提供了三个反馈入口，均指向本项目的 Issue 页：
+
+| 位置                | 入口                                    |
+| ------------------- | --------------------------------------- |
+| 设置页 → 关于       | 「💬 反馈与建议」卡片，点击「前往反馈」 |
+| 弹窗页脚            | 「反馈」链接                            |
+| GitHub 页面加速面板 | 面板底部「💬 反馈问题 / 节点失效」      |
+
+地址：https://github.com/Master-five-elements/Fast-GitHub/issues
+
+发现节点失效、功能异常或有改进建议，欢迎提 Issue。
 
 ## 安全提醒
 
