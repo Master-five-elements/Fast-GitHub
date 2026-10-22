@@ -2,153 +2,181 @@
 
 # FAST-GitHub · GitHub 加速
 
-国内访问 GitHub 慢、Release 下不动、仓库克隆不动？这个浏览器扩展把下载链接换成加速通道，让速度嗖嗖嗖的~！
+国内访问 GitHub 慢、Release 下不动、仓库克隆不动？这个浏览器扩展把下载链接换成加速通道。
 
-![Version](https://img.shields.io/badge/version-v2.2.0-blue)
+![Version](https://img.shields.io/badge/version-v2.3.1-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-orange)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-[![Page Views Count](https://badges.toozhao.com/badges/01EH1R0YMQANV1ACQXTEBK7JCN/green.svg)](https://badges.toozhao.com/badges/01EH1R0YMQANV1ACQXTEBK7JCN/green.svg "Get your page views count badge on badges.toozhao.com")
-
-> ## 🚀 新版已发布：`gh-accelerator` v2.2.0
->
-> 本项目推出了重写的现代化 MV3 版本，位于 [`gh-accelerator/`](./gh-accelerator) 目录，**推荐新用户直接使用**：
->
-> - 内置 **81 个**社区公益加速节点，开箱即用，不用再手动找节点
-> - **每 24 小时**自动同步节点清单，4 个镜像源依次降级
-> - **节点测速**：延迟探测 + 真实带宽测算，自动挑最快的那条
-> - github.com 打不开时**自动走代理**；登录页 / 账号设置 / 私有仓库**永不代理**
-> - **登录保护白名单可在设置页自由编辑**，内置 33 条规则，支持实时自检
-> - 2026 新设计语言：玻璃态、Bento 布局、微交互、深浅主题
-> - 代码全面 ESM 化并采用 Biome 规范，零构建直接加载
->
-> 完整说明见 [`gh-accelerator/README.md`](./gh-accelerator/README.md)。
+![Tests](https://img.shields.io/badge/tests-74%20logic%20%2B%2032%20e2e-brightgreen)
 
 ---
 
-## 项目状态
+## ⚠️ 编写说明（请先阅读）
 
-先说清楚现状，避免踩坑：
+**本仓库的全部内容由 [WorkBuddy](https://www.workbuddy.cn) 应用中的免费模型（Hy-4-preview 与 Step-5-Preview）自动编写，仓库主人没有参与任何编写、审查与测试事宜。**
+
+- 代码、文档、测试脚本均由模型生成，未经人工逐行审查
+- 模型已做过自测（见下方「验证」），但**不保证**没有缺陷
+- 使用前请自行阅读代码、评估风险，再决定是否安装
+- 如发现安全问题，请提 Issue
+
+---
+
+## 📂 目录说明
+
+| 目录 | 内容 | 状态 |
+| --- | --- | --- |
+| [`gh-accelerator/`](./gh-accelerator) | **当前版本 v2.3.1**，现代化 MV3 扩展 | ✅ 推荐使用 |
+| [`legacy/`](./legacy) | 过往版本存档（gh-accelerator v2.2.0） | 📦 仅存档 |
+| [`fast_github/`](./fast_github) | 旧版 v1.5.10 源码（Vite + React + Tailwind） | 📦 仅存档，不再维护 |
+| [`tools/`](./tools) | 节点库生成与校验脚本 | ✅ 随新版维护 |
+
+> 旧版的 `zip/` 打包目录已删除（v1.5.2 – v1.5.10 共 9 个安装包）。需要旧版请从
+> [Edge 加载项](https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb)
+> 或 git 历史获取。
+
+### 各商店状态（旧版插件）
 
 | 渠道 | 状态 |
 | --- | --- |
-| Chrome 网上应用店 | ❌ **已下架**（2024-02）<br>原因：① Chrome 商店使用人数逐渐减少 ② 已有更好的 GitHub 加速方式与工具 |
-| macOS / 苹果商店 | ❌ **已下架**<br>原因：① 朋友转行、账号快到期 ② 插件收益 < 苹果开发者年费（$99） |
-| Microsoft Edge 加载项 | ✅ **仍可安装**（见下方） |
-| 本仓库源码 | ✅ **持续可用**，新版在 `gh-accelerator/` |
-
-感谢购买过 macOS 版本插件的朋友，也感谢大家一直以来的支持。
-
-> 旧版源码保留在 [`fast_github/`](./fast_github)，历史打包版本在 [`zip/`](./zip)，仅作存档，**不再维护**。
+| Chrome 网上应用店 | ❌ 已下架（2024-02）。原因：① 商店使用人数减少 ② 已有更好的加速方式 |
+| macOS / 苹果商店 | ❌ 已下架。原因：① 维护者转行、账号到期 ② 收益 < 开发者年费 |
+| Microsoft Edge 加载项 | ✅ 仍可安装（旧版 v1.5.10） |
+| 本仓库源码 | ✅ 持续可用，新版在 `gh-accelerator/` |
 
 ---
 
-## 新版：gh-accelerator v2.2.0
+## 🚀 当前版本：gh-accelerator v2.3.1
 
-### 相比旧版的变化
+在旧版 v1.5.10 基础上完全重写的 MV3 扩展。上游项目为
+[fhefh2015/Fast-GitHub](https://github.com/fhefh2015/Fast-GitHub)（Apache-2.0），
+新版沿用同一许可证。
 
-| 能力 | 旧版 v1.5.10 | 新版 v2.2.0 |
-| --- | --- | --- |
-| 加速节点 | 手动往文本框粘贴，得自己找 | 内置 81 个社区节点，可自动同步 |
-| 节点更新 | 无 | 每 24 小时自动同步，多镜像源降级 |
-| 节点测速 | 无 | 延迟 + 带宽测算，自动择优 |
-| github.com 打不开 | 无能为力 | 自动跳转代理节点，图标显示角标 |
-| 登录安全 | 凭证可能经过第三方节点 | 登录页 / 设置页 / 私有仓库永不代理，代理页有安全提示条 |
-| 界面 | 老式表单 | 侧边栏导航、节点卡片、深色模式、Toast |
-| 架构 | Vite + React + Tailwind（需构建） | 零依赖原生 MV3，改完刷新即可 |
-| 代码规范 | 无统一规范 | ESM + JSDoc 类型注解 + Biome 2.6 |
-| 登录保护 | 无 | 白名单规则可在设置页自由编辑（33 条默认规则 + 实时自检） |
+### 功能
+
+**节点体系**
+- 内置 **81 个**社区公益加速节点，开箱即用
+- 精选 **3 个活跃节点仓库**，每 **24 小时**自动同步，每个仓库 4 个镜像依次降级
+- 设置页可追加**自定义节点源**（与仓库合并同步，清空即移除）
+- **重复节点查重合并**：统一大小写、协议、`www.`、端口、路径后归并，显示来源徽章
+
+**测速与择优**
+- 延迟探测（HEAD 计时）+ 真实带宽测算（下载样本文件换算 Mbps）
+- 节点能力探测：是否支持 Range 断点续传、是否支持 git smart HTTP
+- 真实使用成功率计入健康度评分，失败率高的节点自动降权
+
+**智能路由（按域名分流）**
+- `raw` 文件 → **jsDelivr CDN**（`cdn.jsdelivr.net`，商业 CDN，不经第三方节点）
+- `api.github.com` / `codeload.github.com` → 直连可用则直连，省公益节点带宽
+- github.com 页面 → 智能模式走节点保证渲染完整；失败时自动代理兜底
+- 每 6 小时重新探测各域名连通性（两轮重试抗抖动），路由页可手动触发与自检
+- jsDelivr 覆盖不到时（私有仓库、超 20MB）自动降级到加速节点
+
+**安全**
+- github.com 打不开时自动跳转代理节点，图标显示「代理」角标，页面注入安全提示条
+- **登录保护白名单可编辑**：内置 33 条规则（登录、2FA、账号设置、组织与企业设置等），
+  支持 `*` 通配、实时自检、增删改与恢复默认
+- 私有仓库页面自动上报，加入运行时永不代理名单
+
+**界面**
+- 2026 设计语言：玻璃态、Bento 概览卡、大圆角、多层柔和阴影、微交互、深浅主题
+- GitHub 页面注入渐变下拉面板，每条通道带延迟标签与一键复制
+
+**架构**
+- 零构建原生 MV3（ESM + JSDoc 类型注解），改完刷新即用
+- 代码统一 **Biome** 规范（一个配置替代 Prettier + ESLint）
 
 ### 安装
 
-1. 打开 `chrome://extensions/`（Edge 为 `edge://extensions/`）
-2. 打开右上角 **开发者模式**
-3. 点击 **加载已解压的扩展程序**，选择本仓库中的 `gh-accelerator` 目录
-4. 首次安装会自动打开设置页，点一次「保存设置」即可
+**方式一：Release 压缩包（推荐）**
 
-也可从 [Releases](https://github.com/Master-five-elements/Fast-GitHub/releases) 下载打包好的版本。
+1. 前往 [Releases](https://github.com/Master-five-elements/Fast-GitHub/releases/latest) 下载 `gh-accelerator-v2.3.1.zip`
+2. 解压得到 `gh-accelerator-v2.3.1/` 文件夹
+3. 浏览器打开 `chrome://extensions`（Edge 为 `edge://extensions`）
+4. 开启右上角「**开发者模式**」
+5. 点「**加载已解压的扩展**」，选择刚才解压的文件夹
 
-### 目录结构
+**方式二：仓库源码**
 
-```
-gh-accelerator/    扩展本体（MV3，零构建）
-├─ lib/            节点库、设置仓库、测速模块、设计系统
-├─ options/        设置页：节点管理 / 通用设置 / 关于
-├─ popup/          弹窗：当前节点 / 测速 / 一键代理
-└─ preview/        离线 UI 预览（仅用于查看界面）
-tools/             节点库生成与校验脚本
-fast_github/       旧版源码（存档）
-zip/               旧版历史打包（存档）
+```bash
+git clone https://github.com/Master-five-elements/Fast-GitHub.git
 ```
 
----
+然后在 `chrome://extensions` 里直接加载 `gh-accelerator/` 目录（无需任何构建步骤）。
 
-## 旧版预览
+**方式三：Edge 加载项**（旧版 v1.5.10，功能少于新版）
 
-<img width="1383" alt="旧版界面预览" src="https://user-images.githubusercontent.com/14891797/153814732-d43dbf95-38a3-4145-ac84-a628bc543509.png">
+[GitHub 加速 - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb)
 
-## 从 Edge 商店安装（旧版）
+### 权限说明
 
-<table>
-  <tbody>
-    <tr>
-      <td>
-        <a href="https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb" target="_blank">
-          <img src="https://i.loli.net/2021/04/23/EnS3eDi4I86Yv2N.png" />
-        </a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+| 权限 | 用途 |
+| --- | --- |
+| `storage` | 保存设置、节点与测速结果 |
+| `alarms` | 24 小时节点同步、6 小时域名探测 |
+| `webNavigation` | 感知 github.com 加载失败以触发自动代理 |
+| `scripting` | 向代理页面注入安全提示条 |
+| `https://*/*` `http://*/*` | 访问任意节点域名做测速与下载（加速类扩展的必要权限） |
 
----
+### 验证
 
-## ⚠️ 免责声明
+新版经过三层验证，全部通过：
 
-使用本项目前，请务必读完以下内容。
+```bash
+node tools/smoke_test.mjs                                          # 74 项逻辑测试（mock chrome + fetch）
+NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 32 项真实浏览器端到端（puppeteer-core 驱动本机 Edge）
+```
 
-**1. 与 GitHub 官方无关**
-本项目是第三方独立开发的工具，与 **GitHub, Inc. 没有任何关联、授权或背书**。"GitHub" 是 GitHub, Inc. 的注册商标，本项目仅作指向性引用。
-
-**2. 请求会经过第三方服务器**
-加速节点由**社区志愿者以公益性质提供**。使用加速即意味着你的下载请求会经由这些第三方服务器中转，节点运营方在技术上可以观测到请求目标、来源 IP、User-Agent 等信息。
-
-**3. 严禁用于敏感内容**
-- 请勿用于**私有仓库**、企业内部仓库或任何需要授权才能访问的资源
-- 请勿在任何代理页面上**登录 GitHub 账号**或输入密码、2FA 验证码
-- 请勿让带 **Token / Cookie / Authorization** 的请求走代理
-- 新版已内置登录保护（登录页、账号设置、组织设置、私有仓库均不会被自动代理），但请自行核实后再使用
-
-**4. 不保证可用性与安全性**
-公益节点随时可能变更域名、限流、甚至永久下线，节点本身也不受本项目控制。本项目**不保证任何节点的可用性、速度、稳定性或可信度**，请自行测速并择优使用。
-
-**5. 请合法使用**
-请仅用于下载**公开、合法、你有权获取**的资源，并遵守所在地法律法规与 [GitHub 服务条款](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service)。禁止用于绕过访问控制、抓取私有数据、批量盗取资源等用途。
-
-**6. 责任豁免**
-本项目按「原样」(AS IS) 提供，不含任何明示或默示的担保。对于因使用或无法使用本项目而导致的**数据泄露、账号损失、凭证外泄、下载内容侵权或任何法律责任**，作者不承担任何责任。继续使用即表示你已充分理解并接受上述全部风险。
-
-> 一句话：**只用它下载公开资源，不要登录，不要传凭证。**
+- 逻辑层：节点归一化与查重、择优排序、白名单 glob 匹配、测速、多仓库与自定义源同步、路由决策
+- 端到端：真实加载扩展、service worker 激活、81 节点渲染、白名单增删改与自检、
+  **域名真实探测与路由判定**、14 个消息处理器逐一调用、content script 在模拟 GitHub 页面真实注入
+- 代码规范：`biome check` 19 个文件零告警
 
 ---
 
-## 引用与致谢
+## 🗂 过往版本
 
-本项目的实现离不开这些开源项目：
+[`legacy/gh-accelerator-v2.2.0/`](./legacy/gh-accelerator-v2.2.0) 保留了上一版完整源码，
+含当时的 22 个文件。该版本缺少后续新增的 jsDelivr CDN 通道、域名分流、能力探测、
+自定义节点源与代码精简，仅作存档与对比，**请勿直接使用**。
 
-| 项目 | 说明 | 链接 |
+更早的旧版 v1.5.10 源码在 [`fast_github/`](./fast_github)，需要 Vite 构建，已停止维护。
+
+---
+
+## 🔗 引用与致谢
+
+本项目站在以下开源项目的肩膀上：
+
+| 项目 | 用途 | 许可证 |
 | --- | --- | --- |
-| **Master-five-elements/Fast-GitHub** | 本仓库，原版扩展 v1.5.10（Apache-2.0） | https://github.com/Master-five-elements/Fast-GitHub |
-| **hubporg/ghproxy-next** | 新版加速节点来源（81 个社区公益节点）与节点测速实现参考（GPL-3.0） | https://github.com/hubporg/ghproxy-next |
-| **hunshcn/gh-proxy** | 自建 GitHub 加速服务的参考实现 | https://github.com/hunshcn/gh-proxy |
-| **conwnet/github1s** | GitHub1s，在浏览器中用 VS Code 阅读仓库 | https://github.com/conwnet/github1s |
-| **fhefh2015/Fast-GitHub** | 原版扩展的另一镜像仓库，旧版使用说明引用自此 | https://github.com/fhefh2015/Fast-GitHub |
-| **Cloudflare** | 为原版加速服务提供基础设施支持 | https://www.cloudflare.com/ |
-| **DartNode** | 为开源项目提供免费 VPS | https://dartnode.com |
+| [fhefh2015/Fast-GitHub](https://github.com/fhefh2015/Fast-GitHub) | **上游原项目**，旧版 v1.5.10 源码与图标来源 | Apache-2.0 |
+| [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next) | 主要节点清单来源（`components/nodes.ts`，81 个节点）与测速实现参考 | GPL-3.0 |
+| [clion007/adss](https://github.com/clion007/adss) | 节点仓库（`ghnodes/ghnodes.ini`，纯文本清单） | 见其仓库 |
+| [lopinnn56/github-fast](https://github.com/lopinnn56/github-fast) | 节点仓库（`src/lib/nodes-core.js`，`name`/`prefix` 结构） | 见其仓库 |
+| [conwnet/github1s](https://github.com/conwnet/github1s) | 文件树 Web IDE 入口参考 | MIT |
+| [jsDelivr](https://www.jsdelivr.net) | 公共 CDN，raw 文件加速通道（`cdn.jsdelivr.net`） | 服务 |
+| [DartNode](https://dartnode.com) | 为上游开源项目提供免费 VPS | — |
 
-**关于许可证的说明**：本仓库代码沿用 **Apache License 2.0**；新版内置的加速节点清单源自 `hubporg/ghproxy-next`（**GPL-3.0**）。若你对节点数据的使用有合规要求，请遵循其原始许可证。
+**许可证说明**：本仓库代码沿用上游的 Apache-2.0；内置节点数据源自 GPL-3.0 的
+ghproxy-next，两者协议并不兼容，有合规需求的请遵循各原始项目的许可证声明。
 
 ---
 
-## 许可证
+## 📄 免责声明
 
-本项目基于 [Apache License 2.0](./LICENSE) 发布。
+1. **无关联**：本项目与 GitHub, Inc. 无任何关联，未获其授权或背书。"GitHub" 是 GitHub, Inc. 的注册商标。
+2. **请求经第三方中转**：加速节点均为社区公益服务，请求会经过第三方服务器，节点运营方可以观测到请求目标与来源 IP。
+3. **严禁用于敏感操作**：请勿通过加速节点访问私有仓库、登录 GitHub、或发送任何带 Token / Cookie 的请求。新版已内置登录保护，但请务必使用官方地址 `github.com/login` 登录。
+4. **不保证可用性**：不保证任何节点的可用性、速度与可信度，节点随时可能变更或下线。
+5. **合法使用**：仅可用于访问公开合法资源，请遵守所在地区法律法规与 GitHub 服务条款。
+6. **责任豁免**：本软件按「现状」（AS IS）提供，不附带任何明示或默示担保。因使用本软件造成的任何损失，作者与贡献者不承担责任。
+7. **AI 生成代码**：本仓库内容由 AI 模型自动生成（见上方「编写说明」），未经人工审查，使用风险自担。
+
+**一句话：只用它下载公开资源，不要登录，不要传凭证。**
+
+---
+
+## 📜 许可证
+
+代码沿用上游 [Apache-2.0](./LICENSE)。节点数据来源协议见「引用与致谢」。
