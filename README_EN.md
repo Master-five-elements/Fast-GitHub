@@ -5,10 +5,10 @@
 Slow GitHub access, stalled Release downloads, stuck clones? This browser extension
 rewrites download links to accelerated channels.
 
-![Version](https://img.shields.io/badge/version-v2.3.1-blue)
+![Version](https://img.shields.io/badge/version-v2.4.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-orange)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![Tests](https://img.shields.io/badge/tests-74%20logic%20%2B%2032%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-50%2B%20logic%20%2B%2035%20e2e-brightgreen)
 
 > 中文说明见 [`README.md`](./README.md)。This is the English summary.
 
@@ -32,10 +32,10 @@ in any writing, review, or testing.**
 
 | Path | Contents | Status |
 | --- | --- | --- |
-| [`gh-accelerator/`](./gh-accelerator) | **Current version v2.3.1**, modern MV3 extension | ✅ Recommended |
+| [`gh-accelerator/`](./gh-accelerator) | **Current version v2.4.0**, modern MV3 extension | ✅ Recommended |
 | [`legacy/`](./legacy) | Archived previous version (gh-accelerator v2.2.0) | 📦 Archive only |
 | [`fast_github/`](./fast_github) | Legacy v1.5.10 source (Vite + React + Tailwind) | 📦 Archive only, unmaintained |
-| [`tools/`](./tools) | Node-list generation and verification scripts | ✅ Maintained with v2.3.1 |
+| [`tools/`](./tools) | Node-list generation and verification scripts | ✅ Maintained with v2.4.0 |
 
 The legacy `zip/` folder (9 packages, v1.5.2 – v1.5.10) has been removed. For the old
 build use the [Edge Addons listing](https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb)
@@ -43,16 +43,24 @@ or git history.
 
 ---
 
-## 🚀 Current version: gh-accelerator v2.3.1
+## 🚀 Current version: gh-accelerator v2.4.0
 
 A complete MV3 rewrite of the old v1.5.10. Upstream project:
 [fhefh2015/Fast-GitHub](https://github.com/fhefh2015/Fast-GitHub) (Apache-2.0); the new
 version keeps the same license.
 
+> **v2.4.0 highlights**: node repositories expanded from 3 to **8** and **classified**
+> as acceleratable vs download-only; the early "page enhancement" module (Web IDE entry
+> and issue translation) was removed to focus on core acceleration; the settings page and
+> popup were restyled with a **Stardew Valley** look.
+
 ### Features
 
-- **81 built-in community nodes**, synced every **24 hours** from **3 curated active
+- **81 built-in community nodes**, synced every **24 hours** from **8 curated active
   node repositories**, each with 4 fallback mirrors
+- Nodes are **classified by capability**: **acceleratable repos (full)** support clone /
+  git smart HTTP and downloads; **download-only (download)** can only fetch files
+  (raw / release / archive), not accelerate clones
 - **Custom node sources** in the settings page, merged with the repositories
 - **Deduplication**: case, protocol, `www.`, port and path normalized before merging
 - **Speed test**: HEAD latency + real bandwidth measurement; capability probes
@@ -63,15 +71,15 @@ version keeps the same license.
 - **Security**: auto-proxy on navigation failure with a safety banner; **editable
   login-protection whitelist** (33 default rules, wildcard support, live self-check);
   private repos reported at runtime and never proxied
-- **UI**: 2026 design language — glassmorphism, bento cards, micro-interactions,
-  light/dark themes
+- **UI**: Stardew Valley cozy / rustic — warm parchment and wood tones, thick borders
+  with hard (no-blur) shadows, forest-green sidebar; light/dark themes
 - **Zero-build** native MV3 (ESM + JSDoc), formatted and linted with **Biome**
 
 ### Install
 
-1. Download `gh-accelerator-v2.3.1.zip` from
+1. Download `gh-accelerator-v2.4.0.zip` from
    [Releases](https://github.com/Master-five-elements/Fast-GitHub/releases/latest)
-2. Unzip to get the `gh-accelerator-v2.3.1/` folder
+2. Unzip to get the `gh-accelerator-v2.4.0/` folder
 3. Open `chrome://extensions` (Edge: `edge://extensions`)
 4. Enable **Developer mode**
 5. Click **Load unpacked** and select the folder
@@ -81,8 +89,8 @@ Or load [`gh-accelerator/`](./gh-accelerator) straight from a clone — no build
 ### Verification
 
 ```bash
-node tools/smoke_test.mjs                                          # 74 logic tests (mock chrome + fetch)
-NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 32 end-to-end tests (puppeteer-core driving local Edge)
+node tools/smoke_test.mjs                                          # 50+ logic tests (mock chrome + fetch)
+NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 35 end-to-end tests (puppeteer-core driving local Edge)
 ```
 
 All passing, plus `biome check` clean across 19 files.
@@ -97,7 +105,11 @@ All passing, plus `biome check` clean across 19 files.
 | [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next) | Main node list (`components/nodes.ts`, 81 nodes) and speed-test reference | GPL-3.0 |
 | [clion007/adss](https://github.com/clion007/adss) | Node repository (`ghnodes/ghnodes.ini`) | see repo |
 | [lopinnn56/github-fast](https://github.com/lopinnn56/github-fast) | Node repository (`src/lib/nodes-core.js`) | see repo |
-| [conwnet/github1s](https://github.com/conwnet/github1s) | Web IDE entry reference | MIT |
+| [mihsian77/MirrorHub](https://github.com/mihsian77/MirrorHub) | Node repository (self-classified, auto-discover / speed-test / cleanup) | see repo |
+| [triwinds/ns-emu-tools](https://github.com/triwinds/ns-emu-tools) | Node repository (separate download & raw mirrors) | see repo |
+| [XIU2/UserScript](https://github.com/XIU2/UserScript) | Node repository (GithubEnhanced high-speed download userscript mirrors) | see repo |
+| [RC1844/FastGithub](https://github.com/RC1844/FastGithub) | Node repository (userscript quick-jump to GitHub mirror sites) | see repo |
+| [KotobaWakusei/GitHubMirrorPlugin](https://github.com/KotobaWakusei/GitHubMirrorPlugin) | Node repository (plugin config that auto-picks the fastest mirror) | see repo |
 | [jsDelivr](https://www.jsdelivr.net) | Public CDN for raw file acceleration | service |
 | [DartNode](https://dartnode.com) | Free VPS for the upstream open-source project | — |
 
