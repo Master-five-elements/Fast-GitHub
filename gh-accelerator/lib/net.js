@@ -1,7 +1,8 @@
 /**
- * 远端节点同步 + 节点测速（延迟 / 带宽）。
+ * 远端节点同步 + 节点测速（延迟 / 带宽 / 能力）。
  */
 
+import { DOWNLOAD_ONLY_HOSTS } from "./repos.js";
 import { buildProxyUrl, replaceRepoNodes } from "./store.js";
 
 /**
@@ -56,68 +57,256 @@ async function headProbe(url, timeoutMs) {
 }
 
 /**
- * 解析节点清单，兼容三种形态：
- * 1. ghproxy-next 的 nodes.ts：`{ label: "…", value: "…" }`
- * 2. JSON 数组：`[{ value }]` 或 `["a.com"]`
- * 3. 纯文本：一行一个域名
+ * 解析节点清单。
+ *
+ * 支持的 parser（见 lib/repos.js 的说明）：
+ * `pair` / `prefix` / `text` / `json` / `mirrorhub` / `mirrors` / `triple` / `urls` / `auto`
+ *
+ * 每条结果带 `kind`：`full`（可加速仓库）或 `download`（仅下载文件）。
  * @param {string} text
- * @returns {{ value: string; label: string }[]}
+ * @param {string} [parser]
+ * @returns {{ value: string; label: string; kind?: "full" | "download" }[]}
  */
-export function parseNodes(text) {
+export function parseNodes(text, parser = "auto") {
   if (!text) return [];
-  /** @type {{ value: string; label: string }[]} */
+  const type = parser || "auto";
+
+  // 结构化 JSON 类优先按对应格式解析
+  if (type === "mirrorhub") return parseMirrorHub(text);
+  if (type === "mirrors") return parseMirrorsJson(text);
+  if (type === "triple") return parseTriples(text);
+  if (type === "urls") return parseUrls(text);
+
+  /** @type {{ value: string; label: string; kind?: "full" | "download" }[]} */
   const out = [];
 
-  const pairRe =
-    /\{\s*label\s*:\s*["']([^"']*)["']\s*,\s*value\s*:\s*["']([^"']+)["']\s*\}/g;
-  const prefixRe =
-    /\{\s*name\s*:\s*["']([^"']+)["']\s*,\s*prefix\s*:\s*["']https?:\/\/([^/"']+)/g;
-  for (let match = pairRe.exec(text); match !== null; match = pairRe.exec(text)) {
-    out.push({ value: match[2].trim(), label: (match[1] || "contribute").trim() });
+  if (type === "auto" || type === "pair") {
+    const pairRe =
+      /\{\s*label\s*:\s*["']([^"']*)["']\s*,\s*value\s*:\s*["']([^"']+)["']\s*\}/g;
+    for (let m = pairRe.exec(text); m !== null; m = pairRe.exec(text)) {
+      out.push({ value: m[2].trim(), label: (m[1] || "contribute").trim() });
+    }
+    if (out.length) return out;
   }
-  if (out.length) return out;
 
-  // 形态二：{ name: "…", prefix: "https://host/" }
-  for (let match = prefixRe.exec(text); match !== null; match = prefixRe.exec(text)) {
-    out.push({ value: match[2].trim(), label: (match[1] || "node").trim() });
+  if (type === "auto" || type === "prefix") {
+    const prefixRe =
+      /\{\s*name\s*:\s*["']([^"']+)["']\s*,\s*prefix\s*:\s*["']https?:\/\/([^/"']+)/g;
+    for (let m = prefixRe.exec(text); m !== null; m = prefixRe.exec(text)) {
+      out.push({ value: m[2].trim(), label: (m[1] || "node").trim() });
+    }
+    if (out.length) return out;
   }
-  if (out.length) return out;
 
-  const trimmed = text.trim();
-  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
-    try {
-      const data = JSON.parse(trimmed);
-      const arr = Array.isArray(data) ? data : (data.nodes ?? []);
-      for (const item of arr) {
-        if (typeof item === "string") {
-          out.push({ value: item.trim(), label: "remote" });
-        } else if (item) {
-          const value =
-            item.value ??
-            item.domain ??
-            item.host ??
-            item.url ??
-            item.prefix ??
-            item.name;
-          if (value) {
-            out.push({ value: String(value).trim(), label: item.label ?? "remote" });
+  if (type === "auto" || type === "json") {
+    const trimmed = text.trim();
+    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      try {
+        const data = JSON.parse(trimmed);
+        const arr = Array.isArray(data) ? data : (data.nodes ?? []);
+        for (const item of arr) {
+          if (typeof item === "string") {
+            out.push({ value: item.trim(), label: "remote" });
+          } else if (item) {
+            const value =
+              item.value ??
+              item.domain ??
+              item.host ??
+              item.url ??
+              item.prefix ??
+              item.name;
+            if (value) {
+              out.push({ value: String(value).trim(), label: item.label ?? "remote" });
+            }
           }
         }
+        if (out.length) return out;
+      } catch {
+        /* 继续按纯文本处理 */
       }
-      if (out.length) return out;
-    } catch {
-      /* 继续按纯文本处理 */
     }
   }
 
-  for (const line of text.split(/\r?\n/)) {
-    const value = line.trim().replace(/^["',]+|["',]+$/g, "");
-    if (!value || value.startsWith("//") || value.startsWith("#")) continue;
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)) continue;
-    out.push({ value, label: "remote" });
+  if (type === "auto" || type === "text") {
+    for (const line of text.split(/\r?\n/)) {
+      const value = line.trim().replace(/^["',]+|["',]+$/g, "");
+      if (!value || value.startsWith("//") || value.startsWith("#")) continue;
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)) continue;
+      out.push({ value, label: "remote" });
+    }
+    if (out.length) return out;
+  }
+
+  // 兜底：从任意文本提取 https:// 域名
+  if (type === "auto") return parseUrls(text);
+  return out;
+}
+
+/**
+ * MirrorHub 的 nodes.json：categories.{universal_proxy,web_mirror,clone_specialized,cdn_raw}
+ * 每个节点带 supports 数组，可直接得出能力分类。
+ * @param {string} text
+ */
+function parseMirrorHub(text) {
+  /** @type {{ value: string; label: string; kind?: "full" | "download" }[]} */
+  const out = [];
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return out;
+  }
+  const cats = data?.categories ?? {};
+  for (const [cat, val] of Object.entries(cats)) {
+    const nodes = /** @type {any} */ (val)?.nodes;
+    if (!Array.isArray(nodes)) continue;
+    // cdn_raw 只能下 raw/blob 文件；其余三类都能加速仓库（clone / web）
+    const kind = cat === "cdn_raw" ? "download" : "full";
+    for (const n of nodes) {
+      const host = hostOf(String(n?.url ?? ""));
+      if (!host) continue;
+      out.push({ value: host, label: String(n?.name ?? cat), kind });
+    }
   }
   return out;
 }
+
+/**
+ * ns-emu-tools 的 github_mirrors.json：{ download: [{url,kind}], raw: [{url,kind}] }
+ * 两组都是文件下载向的镜像。
+ * @param {string} text
+ */
+function parseMirrorsJson(text) {
+  /** @type {{ value: string; label: string; kind?: "full" | "download" }[]} */
+  const out = [];
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return out;
+  }
+  for (const group of ["download", "raw"]) {
+    const list = data?.[group];
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      const host = hostOf(String(item?.url ?? ""));
+      if (!host) continue;
+      const label = String(item?.region ?? group) || group;
+      out.push({ value: host, label, kind: "download" });
+    }
+  }
+  return out;
+}
+
+/**
+ * FastGithub 的 MirrorUrl[N] = ["url", "name", "tip"] 三元组。
+ * 跳过注释行；git@ 开头的 SSH 地址不是 HTTP 代理，跳过。
+ * @param {string} text
+ */
+function parseTriples(text) {
+  /** @type {{ value: string; label: string; kind?: "full" | "download" }[]} */
+  const out = [];
+  const re = /MirrorUrl\[\s*\d+\s*\]\s*=\s*\[\s*"([^"]+)"\s*,\s*"([^"]*)"/g;
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    const url = m[1].trim();
+    // 跳过被注释掉的行
+    const lineStart = text.lastIndexOf("\n", m.index) + 1;
+    if (text.slice(lineStart, m.index).trim().startsWith("//")) continue;
+    if (/^git@|^ssh:/i.test(url)) continue;
+    const host = hostOf(url);
+    if (!host) continue;
+    out.push({ value: host, label: m[2].trim() || "mirror" });
+  }
+  return out;
+}
+
+/**
+ * 从任意文本提取 https:// 域名（兜底解析）。
+ * 过滤 GitHub 自身域名与明显不相关的站点。
+ * @param {string} text
+ */
+function parseUrls(text) {
+  /** @type {{ value: string; label: string; kind?: "full" | "download" }[]} */
+  const out = [];
+  /** @type {Set<string>} */
+  const seen = new Set();
+  const re = /https?:\/\/([a-z0-9][a-z0-9.-]*\.[a-z]{2,})/gi;
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    const host = m[1].toLowerCase().replace(/^www\./, "");
+    if (seen.has(host)) continue;
+    if (IGNORED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) continue;
+    seen.add(host);
+    out.push({ value: host, label: "remote" });
+  }
+  return out;
+}
+
+/** 提取 URL 的 hostname；兼容不带协议的裸域名 */
+function hostOf(url) {
+  const raw = String(url ?? "").trim();
+  if (!raw) return "";
+  try {
+    const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    return new URL(withProto).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * 确定某个节点的能力分类。
+ * 已知 CDN 域名（含 jsdelivr.* 镜像）确定只能下载文件；其余按来源判定。
+ * @param {string} value
+ * @param {"full" | "download"} [fallback]
+ * @returns {"full" | "download"}
+ */
+function kindForHost(value, fallback) {
+  const host = hostOf(String(value ?? "").replace(/\/+$/, "")) || nodeKeyOf(value);
+  if (DOWNLOAD_ONLY_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
+    return "download";
+  }
+  // jsDelivr 的各类镜像域名同样是纯 CDN，只能下文件
+  if (host.startsWith("jsdelivr.") || host.endsWith(".jsdelivr.net")) return "download";
+  return fallback === "download" ? "download" : "full";
+}
+
+/** 与 store.nodeKey 等价的轻量归一化（避免循环依赖） */
+function nodeKeyOf(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z]+:\/\//i, "")
+    .replace(/^www\./, "")
+    .split(/[/?#]/)[0]
+    .replace(/:\d+$/, "")
+    .replace(/^\.+|\.+$/g, "");
+}
+
+/** GitHub 自身及不相关站点，不应作为加速节点 */
+const IGNORED_HOSTS = [
+  "github.com",
+  "githubusercontent.com",
+  "github.io",
+  "githubstatus.com",
+  "gitee.com",
+  "codechina.csdn.net",
+  "bootcdn.net",
+  "bootcss.com",
+  "jsdelivr.net", // jsDelivr 走专门的 CDN 通道，不进公益节点池
+  "staticaly.com",
+  "cnpmjs.org",
+  "npmmirror.com",
+  "google.com",
+  "cloudflare.com",
+  "workers.dev", // CF Worker 域名本身不是节点
+  "mozilla.org",
+  "w3.org",
+  "schema.org",
+  "greasyfork.org", // 脚本托管站
+  "example.com", // 文档占位
+  "jsdelivr.net",
+  "b-cdn.net", // BunnyCDN，jsDelivr 的上游 CDN
+];
 
 /**
  * @param {string} url
@@ -138,7 +327,7 @@ export async function fetchText(url, timeoutMs) {
 /**
  * @typedef {Object} SyncResult
  * @property {boolean} ok
- * @property {{ value: string; label: string }[]} nodes
+ * @property {{ value: string; label: string; kind?: "full" | "download" }[]} nodes
  * @property {string} source
  * @property {string} error
  */
@@ -147,9 +336,10 @@ export async function fetchText(url, timeoutMs) {
  * 从远端拉取节点清单，多镜像源依次降级
  * @param {string[]} sources
  * @param {number} [timeoutMs]
+ * @param {string} [parser] 清单格式，默认 auto（自动识别）
  * @returns {Promise<SyncResult>}
  */
-export async function fetchRemoteNodes(sources, timeoutMs) {
+export async function fetchRemoteNodes(sources, timeoutMs, parser = "auto") {
   const list = (sources ?? []).filter(Boolean);
   /** @type {string[]} */
   const errors = [];
@@ -157,7 +347,7 @@ export async function fetchRemoteNodes(sources, timeoutMs) {
   for (const source of list) {
     try {
       const text = await fetchText(source, timeoutMs ?? 15000);
-      const nodes = parseNodes(text).filter((n) => n.value.includes("."));
+      const nodes = parseNodes(text, parser).filter((n) => n.value.includes("."));
       if (nodes.length) return { ok: true, nodes, source, error: "" };
       errors.push(`${source} -> 解析为空`);
     } catch (error) {
@@ -309,7 +499,8 @@ export async function testNode(node, sampleUrl, opts) {
  */
 
 /**
- * 依次同步多个节点仓库，按仓库标记来源后合并
+ * 依次同步多个节点仓库，按仓库标记来源后合并。
+ * 每个仓库按自己的 parser 解析清单，节点带上能力分类（kind）。
  * @param {any} settings
  * @param {import("./repos.js").NodeRepo[]} repos
  * @param {number} [timeoutMs]
@@ -323,10 +514,15 @@ export async function syncAllRepos(settings, repos, timeoutMs) {
   let okCount = 0;
 
   for (const repo of list) {
-    const result = await fetchRemoteNodes(repo.mirrors, timeoutMs ?? 15000);
+    const result = await fetchRemoteNodes(repo.mirrors, timeoutMs ?? 15000, repo.parser);
     if (result.ok) {
       okCount += 1;
-      nodes = replaceRepoNodes(nodes, repo.id, result.nodes);
+      // 仓库默认分类 + 已知 CDN 域名校正
+      const tagged = result.nodes.map((n) => ({
+        ...n,
+        kind: kindForHost(n.value, n.kind ?? repo.kind),
+      }));
+      nodes = replaceRepoNodes(nodes, repo.id, tagged);
       results.push({
         id: repo.id,
         name: repo.name,
