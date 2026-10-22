@@ -2,7 +2,7 @@
  * 远端节点同步 + 节点测速（延迟 / 带宽）。
  */
 
-import { buildProxyUrl } from "./store.js";
+import { buildProxyUrl, replaceRepoNodes } from "./store.js";
 
 /**
  * @typedef {Object} LatencyResult
@@ -19,6 +19,43 @@ import { buildProxyUrl } from "./store.js";
  */
 
 /**
+ * 带超时的 fetch。超时或网络失败统一返回 null，由调用方判定。
+ * @param {string} url
+ * @param {RequestInit & { timeoutMs?: number }} [opts]
+ * @returns {Promise<Response | null>}
+ */
+async function fetchWithTimeout(url, opts) {
+  const { timeoutMs, ...init } = opts ?? {};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs ?? 15000);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * HEAD(no-cors) 探测：能否完成一次往返及耗时。
+ * 节点延迟探测与域名连通性探测共用这一实现。
+ * @param {string} url
+ * @param {number} [timeoutMs]
+ * @returns {Promise<{ ok: boolean; ms: number }>}
+ */
+async function headProbe(url, timeoutMs) {
+  const start = performance.now();
+  const res = await fetchWithTimeout(url, {
+    method: "HEAD",
+    mode: "no-cors",
+    cache: "no-store",
+    timeoutMs,
+  });
+  return { ok: Boolean(res), ms: Math.round(performance.now() - start) };
+}
+
+/**
  * 解析节点清单，兼容三种形态：
  * 1. ghproxy-next 的 nodes.ts：`{ label: "…", value: "…" }`
  * 2. JSON 数组：`[{ value }]` 或 `["a.com"]`
@@ -33,8 +70,16 @@ export function parseNodes(text) {
 
   const pairRe =
     /\{\s*label\s*:\s*["']([^"']*)["']\s*,\s*value\s*:\s*["']([^"']+)["']\s*\}/g;
+  const prefixRe =
+    /\{\s*name\s*:\s*["']([^"']+)["']\s*,\s*prefix\s*:\s*["']https?:\/\/([^/"']+)/g;
   for (let match = pairRe.exec(text); match !== null; match = pairRe.exec(text)) {
     out.push({ value: match[2].trim(), label: (match[1] || "contribute").trim() });
+  }
+  if (out.length) return out;
+
+  // 形态二：{ name: "…", prefix: "https://host/" }
+  for (let match = prefixRe.exec(text); match !== null; match = prefixRe.exec(text)) {
+    out.push({ value: match[2].trim(), label: (match[1] || "node").trim() });
   }
   if (out.length) return out;
 
@@ -46,8 +91,17 @@ export function parseNodes(text) {
       for (const item of arr) {
         if (typeof item === "string") {
           out.push({ value: item.trim(), label: "remote" });
-        } else if (item?.value) {
-          out.push({ value: String(item.value).trim(), label: item.label ?? "remote" });
+        } else if (item) {
+          const value =
+            item.value ??
+            item.domain ??
+            item.host ??
+            item.url ??
+            item.prefix ??
+            item.name;
+          if (value) {
+            out.push({ value: String(value).trim(), label: item.label ?? "remote" });
+          }
         }
       }
       if (out.length) return out;
@@ -71,19 +125,14 @@ export function parseNodes(text) {
  * @returns {Promise<string>}
  */
 export async function fetchText(url, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs ?? 15000);
-  try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      signal: controller.signal,
-      headers: { Accept: "*/*" },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
-  } finally {
-    clearTimeout(timer);
-  }
+  const res = await fetchWithTimeout(url, {
+    cache: "no-store",
+    headers: { Accept: "*/*" },
+    timeoutMs: timeoutMs ?? 15000,
+  });
+  if (!res) throw new Error("网络错误或超时");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.text();
 }
 
 /**
@@ -129,23 +178,8 @@ export async function testLatency(node, timeoutMs) {
   if (!host) return { latency: null, error: "empty" };
 
   const url = /^https?:\/\//i.test(host) ? `${host}/` : `https://${host}/`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs ?? 6000);
-  const start = performance.now();
-  try {
-    await fetch(url, {
-      method: "HEAD",
-      mode: "no-cors",
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    return { latency: Math.round(performance.now() - start), error: "" };
-  } catch (error) {
-    const name = error instanceof Error ? error.name : "";
-    return { latency: null, error: name === "AbortError" ? "timeout" : "error" };
-  } finally {
-    clearTimeout(timer);
-  }
+  const { ok, ms } = await headProbe(url, timeoutMs ?? 6000);
+  return ok ? { latency: ms, error: "" } : { latency: null, error: "timeout" };
 }
 
 /**
@@ -168,25 +202,18 @@ export async function testSpeed(node, sampleUrl, timeoutMs) {
   let ok = false;
 
   while (rounds < 4) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs ?? 10000);
-    try {
-      const url = `${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store", signal: controller.signal });
-      if (!res.ok) {
-        clearTimeout(timer);
-        break;
-      }
-      const buffer = await res.arrayBuffer();
-      clearTimeout(timer);
-      totalBytes += buffer.byteLength;
-      ok = true;
-      rounds += 1;
-      if (performance.now() - start >= 500) break;
-    } catch {
-      clearTimeout(timer);
-      break;
-    }
+    const url = `${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const res = await fetchWithTimeout(url, {
+      cache: "no-store",
+      timeoutMs: timeoutMs ?? 10000,
+    });
+    if (!res?.ok) break;
+    const buffer = await res.arrayBuffer().catch(() => null);
+    if (!buffer) break;
+    totalBytes += buffer.byteLength;
+    ok = true;
+    rounds += 1;
+    if (performance.now() - start >= 500) break;
   }
 
   const seconds = (performance.now() - start) / 1000;
@@ -195,6 +222,51 @@ export async function testSpeed(node, sampleUrl, timeoutMs) {
   }
   const mbps = ((totalBytes * 8) / seconds / (1024 * 1024)).toFixed(1);
   return { speed: `${mbps} Mbps`, bytes: totalBytes, seconds, error: "" };
+}
+
+/**
+ * 探测某个域名是否直连可达
+ * @param {string} url
+ * @param {number} [timeoutMs]
+ * @returns {Promise<{ reachable: boolean; latency: number }>}
+ */
+export async function probeHost(url, timeoutMs) {
+  const { ok, ms } = await headProbe(url, timeoutMs ?? 5000);
+  return { reachable: ok, latency: ms };
+}
+
+/**
+ * 探测节点能力：是否支持 Range 断点续传、是否支持 git smart HTTP
+ * @param {string} node
+ * @param {number} [timeoutMs]
+ * @returns {Promise<{ range: boolean; git: boolean }>}
+ */
+export async function probeCapabilities(node, timeoutMs) {
+  const host = String(node ?? "").replace(/\/+$/, "");
+  if (!host) return { range: false, git: false };
+
+  const base = buildProxyUrl(host, "https://github.com/octocat/Hello-World");
+  const ms = timeoutMs ?? 8000;
+
+  const rangeRes = await fetchWithTimeout(`${base}/README.md`, {
+    headers: { Range: "bytes=0-127" },
+    cache: "no-store",
+    timeoutMs: ms,
+  });
+  const range =
+    rangeRes?.status === 206 || Boolean(rangeRes?.headers?.get?.("content-range"));
+
+  let git = false;
+  const gitRes = await fetchWithTimeout(`${base}.git/info/refs?service=git-upload-pack`, {
+    cache: "no-store",
+    timeoutMs: ms,
+  });
+  if (gitRes?.ok) {
+    const text = await gitRes.text().catch(() => "");
+    git = text.includes("git-upload-pack") || text.includes("refs/");
+  }
+
+  return { range, git };
 }
 
 /**
@@ -226,11 +298,85 @@ export async function testNode(node, sampleUrl, opts) {
   return { value: node, latency, speed, ts: Date.now() };
 }
 
+/**
+ * @typedef {Object} RepoSyncResult
+ * @property {string} id
+ * @property {string} name
+ * @property {boolean} ok
+ * @property {number} count
+ * @property {string} [source]
+ * @property {string} [error]
+ */
+
+/**
+ * 依次同步多个节点仓库，按仓库标记来源后合并
+ * @param {any} settings
+ * @param {import("./repos.js").NodeRepo[]} repos
+ * @param {number} [timeoutMs]
+ * @returns {Promise<{ nodes: any[]; results: RepoSyncResult[]; okCount: number }>}
+ */
+export async function syncAllRepos(settings, repos, timeoutMs) {
+  const list = repos ?? [];
+  /** @type {RepoSyncResult[]} */
+  const results = [];
+  let nodes = [...(settings?.remoteNodes ?? [])];
+  let okCount = 0;
+
+  for (const repo of list) {
+    const result = await fetchRemoteNodes(repo.mirrors, timeoutMs ?? 15000);
+    if (result.ok) {
+      okCount += 1;
+      nodes = replaceRepoNodes(nodes, repo.id, result.nodes);
+      results.push({
+        id: repo.id,
+        name: repo.name,
+        ok: true,
+        count: result.nodes.length,
+        source: result.source,
+      });
+    } else {
+      results.push({
+        id: repo.id,
+        name: repo.name,
+        ok: false,
+        count: 0,
+        error: result.error,
+      });
+    }
+  }
+
+  // 设置页「自定义节点源」文本域：作为额外的虚拟仓库参与同步。
+  // 该列表是权威的——为空时要把历史遗留的 custom 节点一并清掉。
+  const customSources = (settings?.updateSources ?? []).filter(Boolean);
+  if (customSources.length) {
+    const result = await fetchRemoteNodes(customSources, timeoutMs ?? 15000);
+    if (result.ok) {
+      okCount += 1;
+      nodes = replaceRepoNodes(nodes, "custom", result.nodes);
+    }
+    results.push({
+      id: "custom",
+      name: "自定义源",
+      ok: result.ok,
+      count: result.nodes.length,
+      source: result.source,
+      error: result.error,
+    });
+  } else {
+    nodes = nodes.filter((item) => item?.source !== "custom");
+  }
+
+  return { nodes, results, okCount };
+}
+
 export const FGNet = {
   parseNodes,
+  syncAllRepos,
   fetchText,
   fetchRemoteNodes,
   testLatency,
   testSpeed,
   testNode,
+  probeHost,
+  probeCapabilities,
 };
