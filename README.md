@@ -4,12 +4,12 @@
 
 国内访问 GitHub 慢、Release 下不动、仓库克隆不动？这个浏览器扩展把下载链接换成加速通道，让速度嗖嗖嗖的~！
 
-![Version](https://img.shields.io/badge/version-v2.1.0-blue)
+![Version](https://img.shields.io/badge/version-v2.2.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-orange)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 [![Page Views Count](https://badges.toozhao.com/badges/01EH1R0YMQANV1ACQXTEBK7JCN/green.svg)](https://badges.toozhao.com/badges/01EH1R0YMQANV1ACQXTEBK7JCN/green.svg "Get your page views count badge on badges.toozhao.com")
 
-> ## 🚀 新版已发布：`gh-accelerator` v2.1.0
+> ## 🚀 新版已发布：`gh-accelerator` v2.2.0
 >
 > 本项目推出了重写的现代化 MV3 版本，位于 [`gh-accelerator/`](./gh-accelerator) 目录，**推荐新用户直接使用**：
 >
@@ -17,7 +17,9 @@
 > - **每 24 小时**自动同步节点清单，4 个镜像源依次降级
 > - **节点测速**：延迟探测 + 真实带宽测算，自动挑最快的那条
 > - github.com 打不开时**自动走代理**；登录页 / 账号设置 / 私有仓库**永不代理**
-> - 全新设计系统 UI（侧边栏导航、节点卡片、深色模式），零构建直接加载
+> - **登录保护白名单可在设置页自由编辑**，内置 33 条规则，支持实时自检
+> - 2026 新设计语言：玻璃态、Bento 布局、微交互、深浅主题
+> - 代码全面 ESM 化并采用 Biome 规范，零构建直接加载
 >
 > 完整说明见 [`gh-accelerator/README.md`](./gh-accelerator/README.md)。
 
@@ -40,7 +42,7 @@
 
 ---
 
-## 新版：gh-accelerator v2.1.0
+## 新版：gh-accelerator v2.2.0
 
 ### 相比旧版的变化
 
