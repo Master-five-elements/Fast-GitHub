@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "GitHub 加速 · 智能节点版",
-  "version": "2.2.0",
-  "description": "内置 80+ 公益加速节点，24 小时自动更新，支持节点测速与白名单保护；GitHub 打不开时自动走 gh-proxy 节点代理。",
+  "version": "2.3.1",
+  "description": "内置 80+ 公益加速节点，24 小时自动更新，支持节点测速、jsDelivr CDN 通道与登录保护；GitHub 打不开时自动走加速节点代理。",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -39,7 +39,13 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["lib/store.js", "lib/nodes.js", "lib/net.js"],
+      "resources": [
+        "lib/store.js",
+        "lib/nodes.js",
+        "lib/net.js",
+        "lib/repos.js",
+        "lib/routes.js"
+      ],
       "matches": ["*://github.com/*"]
     }
   ]
