@@ -2,6 +2,18 @@
 
 # FAST-GitHub
 
+> ### 🚀 新版：`gh-accelerator` v2.1.0
+>
+> 本项目推出了现代化的 MV3 版本，位于 [`gh-accelerator/`](./gh-accelerator) 目录：
+>
+> - 内置 **81 个**社区公益加速节点（来自 [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next)）
+> - **每 24 小时**自动同步节点，多镜像源依次降级
+> - **节点测速**：延迟 + 真实带宽测算，自动选择最优节点
+> - github.com 打不开时**自动代理**；登录页 / 账号设置 / 私有仓库**永不代理**
+> - 全新设计系统 UI（侧边栏导航、节点卡片、深色模式），零构建可直接加载
+>
+> 完整说明见 [gh-accelerator/README.md](./gh-accelerator/README.md)；旧版源码保留在 `fast_github/`。
+
 # 简介
 
 国内 Github 下载很慢，用上了这个插件后，下载速度嗖嗖嗖的~！ 
