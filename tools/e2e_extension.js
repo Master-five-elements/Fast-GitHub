@@ -103,6 +103,36 @@ async function verifyOptions(browser, extId) {
   const best = await page.$eval("#statBest", (el) => el.textContent);
   check("概览显示最优节点", (best ?? "") !== "—", best);
 
+  // 节点仓库区块
+  const repoItems = await page.$$eval("#repoList .repo-item", (els) => els.length);
+  check("节点仓库列表渲染", repoItems === 3, `${repoItems} 个仓库`);
+
+  const repoNames = await page.$$eval("#repoList .repo-name a", (els) =>
+    els.map((el) => el.textContent.trim()),
+  );
+  check(
+    "仓库名称正确",
+    repoNames.includes("hubporg/ghproxy-next") && repoNames.includes("clion007/adss"),
+    repoNames.join(" | "),
+  );
+
+  const mergeText = await page.$eval("#mergeInfo", (el) => (el.textContent ?? "").trim());
+  check("显示去重统计信息", mergeText.length > 0, mergeText.slice(0, 46));
+
+  await page.click("#btnDedupe");
+  await new Promise((r) => setTimeout(r, 600));
+  const afterDedupe = await page.$eval("#mergeInfo", (el) => (el.textContent ?? "").trim());
+  check("点击去重按钮有反馈", afterDedupe.length > 0, afterDedupe.slice(0, 46));
+
+  // 仓库开关
+  await page.click('#repoList input[data-repo="adss"]');
+  await new Promise((r) => setTimeout(r, 400));
+  const adssOff = await page.$eval(
+    '#repoList input[data-repo="adss"]',
+    (el) => el.checked,
+  );
+  check("仓库开关可切换", adssOff === false);
+
   // 切换到「登录保护」
   await page.click('[data-tab="guard"]');
   await new Promise((r) => setTimeout(r, 400));
@@ -125,7 +155,11 @@ async function verifyOptions(browser, extId) {
   const afterAdd = await page.$eval("#ruleCount", (el) => Number(el.textContent));
   check("可新增白名单规则", afterAdd === Number(ruleCount) + 1, `${afterAdd} 条`);
 
-  // 规则自检
+  // 规则自检（先清掉可能遮挡按钮的 toast）
+  await page.evaluate(() => {
+    const wrap = document.getElementById("toastWrap");
+    if (wrap) wrap.replaceChildren();
+  });
   await page.type("#testUrlInput", "https://github.com/login");
   await page.click("#btnTestUrl");
   await new Promise((r) => setTimeout(r, 300));
@@ -149,6 +183,49 @@ async function verifyOptions(browser, extId) {
   await new Promise((r) => setTimeout(r, 400));
   const afterDel = await page.$eval("#ruleCount", (el) => Number(el.textContent));
   check("可删除白名单规则", afterDel === Number(ruleCount), `${afterDel} 条`);
+
+  // 路由与诊断页
+  await page.evaluate(() => {
+    document.getElementById("toastWrap")?.replaceChildren();
+  });
+  await page.click('[data-tab="network"]');
+  await new Promise((r) => setTimeout(r, 400));
+  const networkActive = await page.$eval('[data-panel="network"]', (el) =>
+    el.classList.contains("is-active"),
+  );
+  check("可切换到路由与诊断页", networkActive === true);
+
+  const probeItems = await page.$$eval("#probeList .probe-item", (els) => els.length);
+  check("域名探测列表渲染", probeItems === 4, `${probeItems} 项`);
+
+  const healthItems = await page.$$eval("#healthList .health-item", (els) => els.length);
+  check("健康度列表渲染", healthItems > 0, `${healthItems} 项`);
+
+  await page.type(
+    "#routeTestInput",
+    "https://raw.githubusercontent.com/torvalds/linux/master/README",
+  );
+  await page.click("#btnRouteTest");
+  await new Promise((r) => setTimeout(r, 400));
+  const routeResult = await page.$eval("#routeTestResult", (el) => el.textContent ?? "");
+  check(
+    "路由自检给出判定",
+    routeResult.length > 0,
+    routeResult.replace(/\s+/g, " ").trim().slice(0, 44),
+  );
+
+  // 真实网络探测（最多等 25s）
+  await page.evaluate(() => {
+    document.getElementById("toastWrap")?.replaceChildren();
+  });
+  await page.click("#btnProbe");
+  await new Promise((r) => setTimeout(r, 25000));
+  const probeText = await page.$eval("#probeList", (el) => el.textContent ?? "");
+  check(
+    "域名连通性真实探测完成",
+    /可达|不可达/.test(probeText),
+    probeText.replace(/\s+/g, " ").trim().slice(0, 60),
+  );
 
   // ESM service worker 是否真实响应消息
   const swResult = await page.evaluate(async () => {
