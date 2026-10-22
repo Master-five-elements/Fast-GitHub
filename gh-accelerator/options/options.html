@@ -27,6 +27,9 @@
           <button class="nav-item" type="button" data-tab="guard">
             <span class="nav-ico">🛡</span>登录保护
           </button>
+          <button class="nav-item" type="button" data-tab="network">
+            <span class="nav-ico">🌐</span>路由与诊断
+          </button>
           <button class="nav-item" type="button" data-tab="general">
             <span class="nav-ico">⚙</span>通用设置
           </button>
@@ -66,6 +69,21 @@
         <!-- ============ 节点管理 ============ -->
         <section class="tab-panel is-active" data-panel="nodes">
           <div class="fg-card">
+            <h2 class="fg-section-title">节点仓库</h2>
+            <p class="fg-section-desc">
+              精选近期活跃的 GitHub 国内加速节点仓库，可单独开关。不同仓库中的同名节点会自动去重合并为一个。
+            </p>
+            <div class="repo-list" id="repoList"></div>
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">重复节点</div>
+                <div class="fg-row-sub" id="mergeInfo">—</div>
+              </div>
+              <button class="fg-btn" id="btnDedupe" type="button">立即去重合并</button>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
             <h2 class="fg-section-title">节点自动更新</h2>
             <p class="fg-section-desc">
               每 24 小时从 ghproxy-next 仓库同步一次社区公益节点，失败自动降级到备用镜像。
@@ -109,12 +127,17 @@
 
             <div class="fg-field" style="margin-top: 16px">
               <label class="fg-label" for="updateSources"
-                >节点源地址（一行一个，按顺序降级）</label
+                >自定义节点源（一行一个地址，与上方仓库合并同步）</label
               >
-              <textarea id="updateSources" class="fg-textarea" spellcheck="false"></textarea>
+              <textarea
+                id="updateSources"
+                class="fg-textarea"
+                spellcheck="false"
+                placeholder="https://example.com/nodes.json"
+              ></textarea>
               <div class="fg-hint">
-                默认指向 <code>hubporg/ghproxy-next</code> 的
-                <code>components/nodes.ts</code>
+                可填任意返回节点清单的地址（支持 <code>{label,value}</code>、
+                <code>{name,prefix}</code>、JSON 数组、一行一个域名）。留空则只同步上方仓库。
               </div>
             </div>
           </div>
@@ -245,6 +268,78 @@
               <button class="fg-btn" id="btnTestUrl" type="button">检测</button>
             </div>
             <div class="test-result" id="testUrlResult"></div>
+          </div>
+        </section>
+
+        <!-- ============ 路由与诊断 ============ -->
+        <section class="tab-panel" data-panel="network">
+          <div class="fg-card">
+            <h2 class="fg-section-title">路由策略</h2>
+            <p class="fg-section-desc">
+              按域名连通性自动决定走直连、jsDelivr CDN 还是公益节点，减少不必要的第三方中转。
+            </p>
+            <div class="fg-field">
+              <label class="fg-label" for="routeMode">路由模式</label>
+              <select class="fg-select" id="routeMode">
+                <option value="auto">
+                  自动：API 与打包直连，raw 走 CDN，其余走节点
+                </option>
+                <option value="directFirst">直连优先：能直连就直连</option>
+                <option value="alwaysProxy">始终走加速节点</option>
+              </select>
+            </div>
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">启用 jsDelivr CDN 通道</div>
+                <div class="fg-row-sub">
+                  公开仓库的 raw 文件走商业 CDN，不经第三方公益节点
+                </div>
+              </div>
+              <label class="fg-switch">
+                <span class="fg-sr-only">启用 jsDelivr CDN</span>
+                <input type="checkbox" id="useJsDelivr" />
+                <span class="fg-switch-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <h2 class="fg-section-title" style="margin: 0">域名连通性</h2>
+              </div>
+              <div class="toolbar-right">
+                <button class="fg-btn" id="btnProbe" type="button">
+                  <span class="fg-spinner" id="probeSpinner" hidden></span>立即探测
+                </button>
+              </div>
+            </div>
+            <div class="probe-list" id="probeList"></div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">路由自检</h2>
+            <p class="fg-section-desc">输入任意 GitHub 地址，查看扩展会怎么走。</p>
+            <div class="add-row">
+              <input
+                class="fg-input"
+                id="routeTestInput"
+                placeholder="https://raw.githubusercontent.com/torvalds/linux/master/README"
+              />
+              <button class="fg-btn" id="btnRouteTest" type="button">判定</button>
+            </div>
+            <div class="test-result" id="routeTestResult"></div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">节点能力与健康度</h2>
+            <p class="fg-section-desc">
+              探测 Range 断点续传与 git 协议支持；健康度来自真实下载记录，失败率高的节点会自动降权。
+            </p>
+            <div class="health-list" id="healthList"></div>
+            <button class="fg-btn fg-btn-sm" id="btnProbeCaps" type="button" style="margin-top: 12px">
+              探测最优节点能力
+            </button>
           </div>
         </section>
 
@@ -385,9 +480,9 @@
               <li><b>登录保护</b>：白名单规则可在「登录保护」页自由编辑</li>
               <li>
                 <b>上游项目</b>：<a
-                  href="https://github.com/Master-five-elements/Fast-GitHub"
+                  href="https://github.com/fhefh2015/Fast-GitHub"
                   target="_blank"
-                  >Master-five-elements/Fast-GitHub</a
+                  >fhefh2015/Fast-GitHub</a
                 >
               </li>
             </ul>
