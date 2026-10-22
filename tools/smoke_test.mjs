@@ -69,6 +69,31 @@ const FAST_TEXT =
   "  { name: 'ghproxy.net', prefix: 'https://ghproxy.net/', mode: 'prefix' },\n" +
   "  { name: 'gh.dpik.top', prefix: 'https://gh.dpik.top/', mode: 'prefix' },\n" +
   "];";
+// MirrorHub：自带能力分类（cdn_raw 为下载专用，其余可加速）
+const MIRRORHUB_JSON = JSON.stringify({
+  categories: {
+    universal_proxy: { nodes: [{ url: "https://gh-proxy.com", name: "gp" }] },
+    web_mirror: { nodes: [{ url: "https://gh-mirror.example.com", name: "wm" }] },
+    clone_specialized: { nodes: [{ url: "https://clone.example.com", name: "cs" }] },
+    cdn_raw: { nodes: [{ url: "https://raw-cdn.example.com", name: "cr" }] },
+  },
+});
+// ns-emu-tools：download / raw 两组均为下载专用
+const NSEMUTILS_JSON = JSON.stringify({
+  download: [{ url: "https://dl.example.com", region: "a" }],
+  raw: [{ url: "https://raw2.example.com", region: "b" }],
+});
+// XIU2/UserScript：从文本中提取 https 域名（urls 解析）
+const USERSCRIPT_TEXT =
+  "https://userscript-gh.ghfastly.top\nhttps://userscript-fast.ghfastly.top\n";
+// RC1844/FastGithub：MirrorUrl 三元组
+const FASTGITHUB_TEXT =
+  'MirrorUrl[0] = ["https://fastgh1.ghfastly.top", "A", "tip"]\n' +
+  'MirrorUrl[1] = ["https://fastgh2.ghfastly.top", "B", "tip"]\n' +
+  '// MirrorUrl[2] = ["https://commented.ghfastly.top", "C", "tip"]\n';
+// KotobaWakusei/GitHubMirrorPlugin：文本中的 https 域名（urls 解析）
+const MCMIRROR_TEXT =
+  "mirrors:\nhttps://mc-mirror1.ghfastly.top\nhttps://mc-mirror2.ghfastly.top\n";
 
 let fetchMode = "ok";
 globalThis.fetch = async (url) => {
@@ -91,6 +116,16 @@ globalThis.fetch = async (url) => {
     text = ADSS_TEXT;
   } else if (target.includes("github-fast")) {
     text = FAST_TEXT;
+  } else if (target.includes("mirrorhub") || target.includes("MirrorHub")) {
+    text = MIRRORHUB_JSON;
+  } else if (target.includes("ns-emu-tools") || target.includes("github_mirrors")) {
+    text = NSEMUTILS_JSON;
+  } else if (target.includes("UserScript") || target.includes("XIU2")) {
+    text = USERSCRIPT_TEXT;
+  } else if (target.includes("FastGithub") || target.includes("RC1844")) {
+    text = FASTGITHUB_TEXT;
+  } else if (target.includes("GitHubMirrorPlugin") || target.includes("KotobaWakusei")) {
+    text = MCMIRROR_TEXT;
   }
   return {
     ok: true,
