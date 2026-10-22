@@ -1,0 +1,424 @@
+/* ==================================================================
+ * FastGitHub · 设计系统（浅色优先，兼容深色）
+ * ================================================================== */
+
+:root {
+  --fg-bg: #f5f6fa;
+  --fg-surface: #ffffff;
+  --fg-surface-2: #fafbfd;
+  --fg-border: #e6e8ef;
+  --fg-border-strong: #d5d9e3;
+  --fg-text: #101828;
+  --fg-text-2: #475467;
+  --fg-muted: #8a94a6;
+  --fg-accent: #5b5bd6;
+  --fg-accent-2: #8b5cf6;
+  --fg-accent-soft: #eeefff;
+  --fg-accent-text: #ffffff;
+  --fg-green: #16a34a;
+  --fg-green-soft: #e7f7ed;
+  --fg-amber: #d97706;
+  --fg-amber-soft: #fdf3e3;
+  --fg-red: #dc2626;
+  --fg-red-soft: #fdecec;
+  --fg-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --fg-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
+  --fg-shadow-lg: 0 18px 40px rgba(16, 24, 40, 0.14);
+  --fg-radius: 14px;
+  --fg-radius-sm: 10px;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --fg-bg: #0d1117;
+  --fg-surface: #161b22;
+  --fg-surface-2: #1c2128;
+  --fg-border: #2a313c;
+  --fg-border-strong: #38414f;
+  --fg-text: #e6edf3;
+  --fg-text-2: #b1bac4;
+  --fg-muted: #7d8896;
+  --fg-accent: #7c7cf0;
+  --fg-accent-2: #a78bfa;
+  --fg-accent-soft: #23263a;
+  --fg-green: #3fb950;
+  --fg-green-soft: #12261a;
+  --fg-amber: #d29922;
+  --fg-amber-soft: #2a2214;
+  --fg-red: #f85149;
+  --fg-red-soft: #2d1618;
+  --fg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --fg-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --fg-shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.fg-body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-text);
+  background: var(--fg-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------- 卡片 ------------------------------- */
+
+.fg-card {
+  background: var(--fg-surface);
+  border: 1px solid var(--fg-border);
+  border-radius: var(--fg-radius);
+  box-shadow: var(--fg-shadow-sm);
+}
+
+.fg-card-pad {
+  padding: 18px;
+}
+
+.fg-section-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.fg-section-desc {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+/* ------------------------------- 按钮 ------------------------------- */
+
+.fg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--fg-border-strong);
+  border-radius: var(--fg-radius-sm);
+  background: var(--fg-surface);
+  color: var(--fg-text-2);
+  font-size: 13px;
+  font-weight: 550;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.fg-btn:hover {
+  border-color: var(--fg-accent);
+  color: var(--fg-accent);
+  background: var(--fg-accent-soft);
+}
+
+.fg-btn:active {
+  transform: translateY(1px);
+}
+
+.fg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fg-btn-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--fg-accent), var(--fg-accent-2));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(91, 91, 214, 0.28);
+}
+
+.fg-btn-primary:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #4f4fd0, #7c4dee);
+  box-shadow: 0 4px 14px rgba(91, 91, 214, 0.36);
+}
+
+.fg-btn-danger:hover {
+  border-color: var(--fg-red);
+  color: var(--fg-red);
+  background: var(--fg-red-soft);
+}
+
+.fg-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.fg-btn-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+/* ------------------------------ 表单控件 ------------------------------ */
+
+.fg-field {
+  margin-bottom: 16px;
+}
+
+.fg-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-text-2);
+}
+
+.fg-input,
+.fg-select,
+.fg-textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--fg-border-strong);
+  border-radius: var(--fg-radius-sm);
+  background: var(--fg-surface);
+  color: var(--fg-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+
+.fg-input:focus,
+.fg-select:focus,
+.fg-textarea:focus {
+  border-color: var(--fg-accent);
+  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.16);
+}
+
+.fg-textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.6;
+}
+
+.fg-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.fg-hint a {
+  color: var(--fg-accent);
+  text-decoration: none;
+}
+
+.fg-hint a:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------- 开关 ------------------------------- */
+
+.fg-switch {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 22px;
+  flex: none;
+  cursor: pointer;
+}
+
+.fg-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.fg-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--fg-border-strong);
+  transition: background 0.18s ease;
+}
+
+.fg-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transition: transform 0.18s ease;
+}
+
+.fg-switch input:checked + .fg-switch-track {
+  background: linear-gradient(135deg, var(--fg-accent), var(--fg-accent-2));
+}
+
+.fg-switch input:checked + .fg-switch-track::after {
+  transform: translateX(18px);
+}
+
+.fg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--fg-border);
+}
+
+.fg-row:last-child {
+  border-bottom: none;
+}
+
+.fg-row-main {
+  min-width: 0;
+}
+
+.fg-row-title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.fg-row-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+/* ------------------------------- 徽章 ------------------------------- */
+
+.fg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--fg-surface-2);
+  color: var(--fg-text-2);
+  border: 1px solid var(--fg-border);
+  white-space: nowrap;
+}
+
+.fg-badge-good {
+  background: var(--fg-green-soft);
+  color: var(--fg-green);
+  border-color: transparent;
+}
+
+.fg-badge-mid {
+  background: var(--fg-amber-soft);
+  color: var(--fg-amber);
+  border-color: transparent;
+}
+
+.fg-badge-bad {
+  background: var(--fg-red-soft);
+  color: var(--fg-red);
+  border-color: transparent;
+}
+
+.fg-badge-accent {
+  background: var(--fg-accent-soft);
+  color: var(--fg-accent);
+  border-color: transparent;
+}
+
+/* ------------------------------ 提示条 ------------------------------ */
+
+.fg-toast-wrap {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fg-toast {
+  min-width: 200px;
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: var(--fg-radius-sm);
+  background: var(--fg-surface);
+  border: 1px solid var(--fg-border);
+  box-shadow: var(--fg-shadow-lg);
+  font-size: 13px;
+  color: var(--fg-text);
+  animation: fg-toast-in 0.22s ease;
+}
+
+.fg-toast.is-ok {
+  border-left: 3px solid var(--fg-green);
+}
+
+.fg-toast.is-err {
+  border-left: 3px solid var(--fg-red);
+}
+
+@keyframes fg-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------ 加载动画 ------------------------------ */
+
+.fg-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--fg-border-strong);
+  border-top-color: var(--fg-accent);
+  border-radius: 50%;
+  animation: fg-spin 0.7s linear infinite;
+  flex: none;
+}
+
+@keyframes fg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fg-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--fg-border);
+  overflow: hidden;
+}
+
+.fg-progress > i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--fg-accent), var(--fg-accent-2));
+  transition: width 0.25s ease;
+}
+
+.fg-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
