@@ -12,6 +12,7 @@ REPO = "Fast-GitHub"
 BRANCH = "main"
 
 TARGETS = [
+    # 旧版 zip/ 打包目录（v1.5.2 – v1.5.10 共 9 个安装包）
     "zip/v1.5.2.zip",
     "zip/v1.5.3.zip",
     "zip/v1.5.4.zip",
@@ -21,6 +22,11 @@ TARGETS = [
     "zip/v1.5.8.zip",
     "zip/v1.5.9.zip",
     "zip/v1.5.10.zip",
+    # 历史遗留：v2.2.0 时代上传、现已淘汰
+    "gh-accelerator/.biomeignore",
+    "tools/fixtures/nodes.ts",
+    "tools/finish_release.py",
+    "tools/push_root_readme.py",
 ]
 
 
