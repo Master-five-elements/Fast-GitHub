@@ -4,10 +4,10 @@
 
 国内访问 GitHub 慢、Release 下不动、仓库克隆不动？这个浏览器扩展把下载链接换成加速通道。
 
-![Version](https://img.shields.io/badge/version-v2.3.1-blue)
+![Version](https://img.shields.io/badge/version-v2.4.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-orange)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![Tests](https://img.shields.io/badge/tests-74%20logic%20%2B%2032%20e2e-brightgreen)
+![Tests](https://img.shields.io/badge/tests-50%2B%20logic%20%2B%2035%20e2e-brightgreen)
 
 ---
 
@@ -26,7 +26,7 @@
 
 | 目录 | 内容 | 状态 |
 | --- | --- | --- |
-| [`gh-accelerator/`](./gh-accelerator) | **当前版本 v2.3.1**，现代化 MV3 扩展 | ✅ 推荐使用 |
+| [`gh-accelerator/`](./gh-accelerator) | **当前版本 v2.4.0**，现代化 MV3 扩展 | ✅ 推荐使用 |
 | [`legacy/`](./legacy) | 过往版本存档（gh-accelerator v2.2.0） | 📦 仅存档 |
 | [`fast_github/`](./fast_github) | 旧版 v1.5.10 源码（Vite + React + Tailwind） | 📦 仅存档，不再维护 |
 | [`tools/`](./tools) | 节点库生成与校验脚本 | ✅ 随新版维护 |
@@ -46,17 +46,22 @@
 
 ---
 
-## 🚀 当前版本：gh-accelerator v2.3.1
+## 🚀 当前版本：gh-accelerator v2.4.0
 
 在旧版 v1.5.10 基础上完全重写的 MV3 扩展。上游项目为
 [fhefh2015/Fast-GitHub](https://github.com/fhefh2015/Fast-GitHub)（Apache-2.0），
 新版沿用同一许可证。
 
+> **v2.4.0 更新要点**：节点仓库由 3 个扩至 **8 个**，并按「**可加速仓库 / 仅下载专用**」分类；
+> 移除早期「页面增强」模块（Web IDE 入口与 Issue 翻译），聚焦核心加速能力；
+> 设置页与弹窗改为**星露谷素风** UI。
+
 ### 功能
 
 **节点体系**
 - 内置 **81 个**社区公益加速节点，开箱即用
-- 精选 **3 个活跃节点仓库**，每 **24 小时**自动同步，每个仓库 4 个镜像依次降级
+- 精选 **8 个活跃节点仓库**，每 **24 小时**自动同步，每个仓库 4 个镜像依次降级
+- 节点按**能力分类**：**可加速仓库（full）**支持 clone / git smart HTTP 也能下载；**仅下载专用（download）**只能下载文件（raw / release / archive），不能加速仓库 clone
 - 设置页可追加**自定义节点源**（与仓库合并同步，清空即移除）
 - **重复节点查重合并**：统一大小写、协议、`www.`、端口、路径后归并，显示来源徽章
 
@@ -79,8 +84,9 @@
 - 私有仓库页面自动上报，加入运行时永不代理名单
 
 **界面**
-- 2026 设计语言：玻璃态、Bento 概览卡、大圆角、多层柔和阴影、微交互、深浅主题
-- GitHub 页面注入渐变下拉面板，每条通道带延迟标签与一键复制
+- 星露谷素风（Stardew Valley cozy / rustic）：暖色羊皮纸与木色调，粗边框 + 无模糊硬阴影，质朴圆角
+- 森林绿侧边栏 + 蜜黄 / 河蓝点缀，深浅主题均适配；注入面板自带不透明羊皮纸底，不依赖 GitHub 主题
+- GitHub 页面注入下拉面板，每条通道带延迟标签与一键复制
 
 **架构**
 - 零构建原生 MV3（ESM + JSDoc 类型注解），改完刷新即用
@@ -90,8 +96,8 @@
 
 **方式一：Release 压缩包（推荐）**
 
-1. 前往 [Releases](https://github.com/Master-five-elements/Fast-GitHub/releases/latest) 下载 `gh-accelerator-v2.3.1.zip`
-2. 解压得到 `gh-accelerator-v2.3.1/` 文件夹
+1. 前往 [Releases](https://github.com/Master-five-elements/Fast-GitHub/releases/latest) 下载 `gh-accelerator-v2.4.0.zip`
+2. 解压得到 `gh-accelerator-v2.4.0/` 文件夹
 3. 浏览器打开 `chrome://extensions`（Edge 为 `edge://extensions`）
 4. 开启右上角「**开发者模式**」
 5. 点「**加载已解压的扩展**」，选择刚才解压的文件夹
@@ -104,6 +110,9 @@ git clone https://github.com/Master-five-elements/Fast-GitHub.git
 
 然后在 `chrome://extensions` 里直接加载 `gh-accelerator/` 目录（无需任何构建步骤）。
 
+**方式三：Edge 加载项**（旧版 v1.5.10，功能少于新版）
+
+[GitHub 加速 - Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/github%E5%8A%A0%E9%80%9F/alhnbdjjbokpmilgemopoomnldpejihb)
 
 ### 权限说明
 
@@ -120,8 +129,8 @@ git clone https://github.com/Master-five-elements/Fast-GitHub.git
 新版经过三层验证，全部通过：
 
 ```bash
-node tools/smoke_test.mjs                                          # 74 项逻辑测试（mock chrome + fetch）
-NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 32 项真实浏览器端到端（puppeteer-core 驱动本机 Edge）
+node tools/smoke_test.mjs                                          # 50+ 项逻辑测试（mock chrome + fetch）
+NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 35 项真实浏览器端到端（puppeteer-core 驱动本机 Edge）
 ```
 
 - 逻辑层：节点归一化与查重、择优排序、白名单 glob 匹配、测速、多仓库与自定义源同步、路由决策
@@ -151,7 +160,11 @@ NODE_PATH=<workspace>/node_modules node tools/e2e_extension.js    # 32 项真实
 | [hubporg/ghproxy-next](https://github.com/hubporg/ghproxy-next) | 主要节点清单来源（`components/nodes.ts`，81 个节点）与测速实现参考 | GPL-3.0 |
 | [clion007/adss](https://github.com/clion007/adss) | 节点仓库（`ghnodes/ghnodes.ini`，纯文本清单） | 见其仓库 |
 | [lopinnn56/github-fast](https://github.com/lopinnn56/github-fast) | 节点仓库（`src/lib/nodes-core.js`，`name`/`prefix` 结构） | 见其仓库 |
-| [conwnet/github1s](https://github.com/conwnet/github1s) | 文件树 Web IDE 入口参考 | MIT |
+| [mihsian77/MirrorHub](https://github.com/mihsian77/MirrorHub) | 节点仓库（自带能力分类，自动发现 / 测速 / 清理） | 见其仓库 |
+| [triwinds/ns-emu-tools](https://github.com/triwinds/ns-emu-tools) | 节点仓库（区分下载镜像与 raw 镜像） | 见其仓库 |
+| [XIU2/UserScript](https://github.com/XIU2/UserScript) | 节点仓库（GithubEnhanced 高速下载油猴脚本内置镜像） | 见其仓库 |
+| [RC1844/FastGithub](https://github.com/RC1844/FastGithub) | 节点仓库（快速跳转 GitHub 镜像站的油猴脚本） | 见其仓库 |
+| [KotobaWakusei/GitHubMirrorPlugin](https://github.com/KotobaWakusei/GitHubMirrorPlugin) | 节点仓库（自动测速选择最快镜像的插件配置） | 见其仓库 |
 | [jsDelivr](https://www.jsdelivr.net) | 公共 CDN，raw 文件加速通道（`cdn.jsdelivr.net`） | 服务 |
 | [DartNode](https://dartnode.com) | 为上游开源项目提供免费 VPS | — |
 
