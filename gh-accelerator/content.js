@@ -9,13 +9,17 @@
  * 这里用动态 import + chrome.runtime.getURL，保证各版本 Chromium 都能运行。
  */
 let store = null;
+let routes = null;
 
-async function ensureStore() {
+async function ensureLibs() {
   if (!store) {
     const mod = await import(chrome.runtime.getURL("lib/store.js"));
     store = mod.FGStore;
   }
-  return store;
+  if (!routes) {
+    routes = await import(chrome.runtime.getURL("lib/routes.js"));
+  }
+  return { store, routes };
 }
 
 const SPEED_ID = "fg-speed-btn";
@@ -73,8 +77,31 @@ function flash(message) {
  * @param {string} rawUrl
  * @param {string} fileName
  */
-async function downloadViaNode(rawUrl, fileName) {
-  const url = nodeUrl(rawUrl);
+/**
+ * 按路由决策下载文件：直连 / jsDelivr CDN / 公益节点
+ * @param {string} sourceUrl
+ * @param {string} fileName
+ */
+async function downloadRouted(sourceUrl, fileName) {
+  const decision = routes.decideRoute(sourceUrl, {
+    settings,
+    probes: settings?.probes ?? {},
+  });
+
+  let url = sourceUrl;
+  let label = "直连";
+  if (decision.mode === "jsdelivr") {
+    url = routes.toJsDelivr(sourceUrl) ?? sourceUrl;
+    label = "jsDelivr CDN";
+  } else if (decision.mode === "proxy") {
+    const node = store.bestNode(settings);
+    url = store.buildProxyUrl(node, sourceUrl);
+    label = node;
+  }
+
+  const start = performance.now();
+  const trackUsage = decision.mode === "proxy";
+
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -88,7 +115,39 @@ async function downloadViaNode(rawUrl, fileName) {
       URL.revokeObjectURL(anchor.href);
       anchor.remove();
     }, 2000);
+
+    if (trackUsage) {
+      await store.recordUsage(store.bestNode(settings), true, performance.now() - start);
+    }
+    flash(`已通过 ${label} 下载 · ${decision.reason}`);
   } catch {
+    if (trackUsage) {
+      await store.recordUsage(store.bestNode(settings), false, performance.now() - start);
+    }
+    // jsDelivr 覆盖不到的情况（私有仓库、超过 20MB、缓存未生成）降级到加速节点
+    if (decision.mode === "jsdelivr") {
+      const node = store.bestNode(settings);
+      const fallback = store.buildProxyUrl(node, sourceUrl);
+      try {
+        const res = await fetch(fallback, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const anchor = document.createElement("a");
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(anchor.href);
+          anchor.remove();
+        }, 2000);
+        await store.recordUsage(node, true, performance.now() - start);
+        flash(`jsDelivr 不可用，已降级经 ${node} 下载`);
+        return;
+      } catch {
+        /* 节点也失败，落到下面的新窗口打开 */
+      }
+    }
     window.open(url, "_blank", "noopener");
   }
 }
@@ -195,12 +254,17 @@ function renderSpeedButton() {
         flash("未找到下载地址");
         return;
       }
-      const proxyUrl = nodeUrl(window.location.origin + href);
+      const source = window.location.origin + href;
+      const decision = routes.decideRoute(source, {
+        settings,
+        probes: settings?.probes ?? {},
+      });
+      const zipUrl = decision.mode === "proxy" ? nodeUrl(source) : source;
       if (target.closest("#fg-zip")) {
-        window.location.href = proxyUrl;
+        window.location.href = zipUrl;
       } else {
-        const ok = await copyText(proxyUrl);
-        flash(ok ? "已复制 ZIP 加速链接" : "复制失败");
+        const ok = await copyText(zipUrl);
+        flash(ok ? `已复制 ZIP 链接 · ${decision.reason}` : "复制失败");
       }
     }
   });
@@ -253,7 +317,7 @@ function addIdeAndDownload() {
       download.textContent = "…";
       const rawUrl = `https://raw.githubusercontent.com${href.replace("/blob/", "/")}`;
       const name = href.split("/").pop() || "file";
-      await downloadViaNode(rawUrl, name);
+      await downloadRouted(rawUrl, name);
       download.textContent = "下载";
       busy = false;
     });
@@ -316,7 +380,7 @@ function addTranslate() {
 }
 
 async function main() {
-  await ensureStore();
+  await ensureLibs();
   settings = await store.get();
   if (!settings?.enabled) return;
 
