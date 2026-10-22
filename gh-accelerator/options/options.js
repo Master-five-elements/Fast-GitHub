@@ -3,6 +3,7 @@
  */
 
 import { FGNet } from "../lib/net.js";
+import { decideRoute, HOST_PROFILES, JSDELIVR, toJsDelivr } from "../lib/routes.js";
 import { DEFAULT_SENSITIVE_PATHS, FGStore, matchSensitive } from "../lib/store.js";
 
 /** @type {import("../lib/store.js").Settings | null} */
@@ -58,6 +59,22 @@ function fmtTime(ts) {
   )}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * 统一重绘界面。节点数据变化后调用，避免各处重复罗列 render 序列。
+ * @param {{ repos?: boolean }} [opts] repos 为 true 时连同节点仓库区块一起重绘
+ */
+function refresh(opts) {
+  fillForm();
+  fillSelects();
+  renderNodes();
+  renderRules();
+  renderStats();
+  if (opts?.repos) {
+    renderRepos();
+    renderMergeInfo();
+  }
+}
+
 /** @param {string} [value] */
 function fmtLatency(value) {
   if (!value || value === "-") return null;
@@ -91,6 +108,8 @@ const FIELDS = /** @type {const} */ ([
   { id: "fallbackNode", key: "fallbackNode", type: "value" },
   { id: "speedTestUrl", key: "speedTestUrl", type: "value" },
   { id: "webIDE", key: "webIDE", type: "value" },
+  { id: "routeMode", key: "routeMode", type: "value" },
+  { id: "useJsDelivr", key: "useJsDelivr", type: "check" },
   { id: "token", key: "token", type: "value" },
   { id: "language", key: "language", type: "value" },
   { id: "theme", key: "theme", type: "value" },
@@ -165,11 +184,7 @@ async function collectAndSave() {
 
   settings = await FGStore.set(patch);
   applyTheme();
-  fillForm();
-  fillSelects();
-  renderNodes();
-  renderRules();
-  renderStats();
+  refresh();
   markSaved();
   toast("设置已保存", "ok");
 }
@@ -236,7 +251,13 @@ function renderNodes() {
         <div class="node-domain">
           ${isBest ? '<span class="fg-badge fg-badge-accent">最优</span>' : ""}
           <span class="node-domain-text" title="${node.value}">${node.value}</span>
-          <span class="fg-badge">${node.custom ? "自定义" : (node.label ?? "node")}</span>
+          <span class="fg-badge">${
+            node.custom
+              ? "自定义"
+              : (node.sources ?? []).some((s) => s && s !== "builtin")
+                ? repoShortName((node.sources ?? []).find((s) => s !== "builtin"))
+                : "内置"
+          }</span>
         </div>
         <div class="node-metric">
           ${
@@ -267,6 +288,221 @@ function renderNodes() {
       </div>`;
       })
       .join("") || '<div class="fg-empty">没有匹配的节点</div>';
+}
+
+/* --------------------------- 路由与诊断 --------------------------- */
+
+function renderProbes() {
+  const container = $("probeList");
+  if (!container || !settings) return;
+  const probes = settings.probes ?? {};
+
+  container.innerHTML = HOST_PROFILES.map((profile) => {
+    const result = probes[profile.id];
+    const cls = !result
+      ? "fg-badge"
+      : result.reachable
+        ? "fg-badge fg-badge-good"
+        : "fg-badge fg-badge-bad";
+    const text = !result
+      ? "未探测"
+      : result.reachable
+        ? `可达 · ${result.latency} ms`
+        : "不可达";
+    return `
+      <div class="probe-item">
+        <div class="probe-main">
+          <div class="probe-name">${profile.label}</div>
+          <div class="probe-desc">${profile.desc}</div>
+        </div>
+        <span class="${cls}">${text}</span>
+      </div>`;
+  }).join("");
+}
+
+async function probeHostsNow() {
+  const spinner = $("probeSpinner");
+  const button = /** @type {HTMLButtonElement} */ ($("btnProbe"));
+  if (spinner) spinner.hidden = false;
+  if (button) button.disabled = true;
+
+  await chrome.runtime.sendMessage({ type: "probeHosts" });
+  settings = await FGStore.get();
+  renderProbes();
+
+  if (spinner) spinner.hidden = true;
+  if (button) button.disabled = false;
+  toast("域名连通性探测完成", "ok");
+}
+
+/** 路由模式 -> 展示用的标签与配色 */
+const MODE_META = {
+  direct: { label: "直连", cls: "fg-badge-good" },
+  jsdelivr: { label: JSDELIVR.label, cls: "fg-badge-accent" },
+  proxy: { label: "公益节点", cls: "fg-badge-mid" },
+};
+
+function routeCheck() {
+  const input = /** @type {HTMLInputElement} */ ($("routeTestInput"));
+  const output = $("routeTestResult");
+  if (!input || !output || !settings) return;
+
+  const url = String(input.value ?? "").trim();
+  if (!url) {
+    output.innerHTML = '<span style="color:var(--fg-muted)">请输入一个地址</span>';
+    return;
+  }
+
+  const decision = decideRoute(url, { settings, probes: settings.probes ?? {} });
+  const meta = MODE_META[decision.mode] ?? MODE_META.proxy;
+
+  const target =
+    decision.mode === "jsdelivr"
+      ? (toJsDelivr(url) ?? url)
+      : decision.mode === "proxy"
+        ? FGStore.buildProxyUrl(FGStore.bestNode(settings), url)
+        : url;
+
+  output.innerHTML = `
+    <span class="fg-badge ${meta.cls}">${meta.label}</span>
+    <div class="route-reason">${decision.reason}</div>
+    <div class="route-target">${target}</div>`;
+}
+
+function renderHealth() {
+  const container = $("healthList");
+  if (!container || !settings) return;
+  const capabilities = settings.capabilities ?? {};
+  const nodes = FGStore.activeNodes(settings).slice(0, 12);
+
+  container.innerHTML = nodes
+    .map((node) => {
+      const health = FGStore.healthOf(settings, node.value);
+      const caps = capabilities[node.value];
+      const healthCls =
+        health.score === null
+          ? "fg-badge"
+          : health.score >= 90
+            ? "fg-badge fg-badge-good"
+            : health.score >= 60
+              ? "fg-badge fg-badge-mid"
+              : "fg-badge fg-badge-bad";
+      const capHtml = caps
+        ? `<span class="fg-badge ${caps.range ? "fg-badge-good" : ""}">Range ${
+            caps.range ? "✓" : "✗"
+          }</span>
+           <span class="fg-badge ${caps.git ? "fg-badge-good" : ""}">Git ${
+             caps.git ? "✓" : "✗"
+           }</span>`
+        : '<span class="fg-badge">未探测</span>';
+      return `
+      <div class="health-item">
+        <span class="health-name">${node.value}</span>
+        <span class="${healthCls}">${health.label}${
+          health.score === null ? "" : ` ${health.score}%`
+        }</span>
+        <span class="fg-badge">${health.uses} 次</span>
+        ${capHtml}
+      </div>`;
+    })
+    .join("");
+}
+
+async function probeCapsNow() {
+  if (!settings) return;
+  const node = FGStore.bestNode(settings);
+  const res = await chrome.runtime.sendMessage({
+    type: "probeCapabilities",
+    value: node,
+  });
+  settings = await FGStore.get();
+  renderHealth();
+  toast(
+    `${node} · Range ${res?.result?.range ? "支持" : "不支持"} / Git ${
+      res?.result?.git ? "支持" : "不支持"
+    }`,
+    "ok",
+  );
+}
+
+/* ------------------------------ 节点仓库 ------------------------------ */
+
+function repoShortName(source) {
+  const repo = FGStore.NODE_REPOS.find((r) => r.id === source);
+  if (repo) return repo.name.split("/")[1] ?? repo.name;
+  return source === "builtin" ? "内置" : (source ?? "remote");
+}
+
+function renderRepos() {
+  const container = $("repoList");
+  if (!container || !settings) return;
+  const enabled = settings.repoEnabled ?? {};
+  const counts = settings.repoCounts ?? {};
+
+  container.innerHTML = FGStore.NODE_REPOS.map(
+    (repo) => `
+      <div class="repo-item">
+        <div class="repo-main">
+          <div class="repo-name">
+            <a href="${repo.url}" target="_blank">${repo.name}</a>
+            <span class="fg-badge">${counts[repo.id] ?? 0} 个</span>
+          </div>
+          <div class="repo-desc">${repo.desc}</div>
+        </div>
+        <label class="fg-switch">
+          <span class="fg-sr-only">启用 ${repo.name}</span>
+          <input type="checkbox" data-repo="${repo.id}" ${
+            enabled[repo.id] !== false ? "checked" : ""
+          } />
+          <span class="fg-switch-track"></span>
+        </label>
+      </div>`,
+  ).join("");
+}
+
+function renderMergeInfo() {
+  const element = $("mergeInfo");
+  if (!element || !settings) return;
+  const raw = [...(settings.remoteNodes ?? []), ...(settings.customNodes ?? [])];
+  const stats = FGStore.mergeStats(raw);
+  const total = FGStore.mergeStats(FGStore.allNodes(settings));
+  element.textContent = raw.length
+    ? `仓库原始 ${stats.total} 条 → 去重后 ${stats.unique} 个（合并 ${stats.merged} 个重复项）；含内置共 ${total.unique} 个可用节点`
+    : "尚未同步任何仓库";
+}
+
+/** 立即去重并写回：统一域名写法、合并重复项 */
+async function dedupeNow() {
+  if (!settings) return;
+  const raw = [...(settings.remoteNodes ?? []), ...(settings.customNodes ?? [])];
+  const stats = FGStore.mergeStats(raw);
+
+  const remoteNodes = FGStore.dedupe(settings.remoteNodes ?? []).map((node) => ({
+    value: node.value,
+    label: node.label ?? "remote",
+    source: (node.sources ?? [])[0] ?? "remote",
+  }));
+  const customNodes = FGStore.dedupe(settings.customNodes ?? []).map((node) => ({
+    value: node.value,
+    label: "custom",
+  }));
+
+  settings = await FGStore.set({ remoteNodes, customNodes });
+  refresh({ repos: true });
+  toast(
+    stats.merged
+      ? `已合并 ${stats.merged} 个重复节点，剩余 ${stats.unique} 个`
+      : "没有发现重复节点",
+    stats.merged ? "ok" : "err",
+  );
+}
+
+async function toggleRepo(id, checked) {
+  settings = await FGStore.set({
+    repoEnabled: { ...(settings.repoEnabled ?? {}), [id]: checked },
+  });
+  renderRepos();
+  toast(`${checked ? "已启用" : "已停用"}仓库 ${id}`, "ok");
 }
 
 async function toggleNode(value) {
@@ -454,6 +690,14 @@ function renderRules() {
   }
 }
 
+/** 统一的规则变更入口：写 settings → 重渲染 → 标记未保存 */
+async function updateRules(next, message) {
+  settings = await FGStore.set({ sensitivePaths: next });
+  renderRules();
+  markDirty();
+  if (message) toast(message, "ok");
+}
+
 async function addRule() {
   const input = /** @type {HTMLInputElement} */ ($("ruleInput"));
   let rule = String(input?.value ?? "").trim();
@@ -466,33 +710,22 @@ async function addRule() {
     toast("规则已存在", "err");
     return;
   }
-  settings = await FGStore.set({ sensitivePaths: [...list, rule] });
+  await updateRules([...list, rule], `已添加规则 ${rule}`);
   if (input) input.value = "";
-  renderRules();
-  markDirty();
-  toast(`已添加规则 ${rule}`, "ok");
 }
 
 async function removeRule(index) {
   const list = [...(settings?.sensitivePaths ?? [])];
   list.splice(index, 1);
-  settings = await FGStore.set({ sensitivePaths: list });
-  renderRules();
-  markDirty();
+  await updateRules(list);
 }
 
-async function resetRules() {
-  settings = await FGStore.set({ sensitivePaths: [...DEFAULT_SENSITIVE_PATHS] });
-  renderRules();
-  markDirty();
-  toast("已恢复默认规则", "ok");
+function resetRules() {
+  updateRules([...DEFAULT_SENSITIVE_PATHS], "已恢复默认规则");
 }
 
-async function clearRules() {
-  settings = await FGStore.set({ sensitivePaths: [] });
-  renderRules();
-  markDirty();
-  toast("已清空规则", "ok");
+function clearRules() {
+  updateRules([], "已清空规则");
 }
 
 function checkUrl() {
@@ -519,25 +752,38 @@ async function syncNow() {
   if (spinner) spinner.hidden = false;
   if (button) button.disabled = true;
 
-  const result = await FGNet.fetchRemoteNodes(settings.updateSources, 15000);
-  if (result.ok) {
-    const before = FGStore.allNodes(settings).length;
+  const repos = FGStore.enabledRepos(settings);
+  const before = FGStore.allNodes(settings).length;
+  const sync = await FGNet.syncAllRepos(settings, repos, 15000);
+  const totalSources =
+    repos.length + (settings.updateSources?.filter(Boolean).length ? 1 : 0);
+
+  /** @type {Record<string, number>} */
+  const counts = {};
+  for (const item of sync.results) counts[item.id] = item.count;
+
+  if (sync.okCount) {
     settings = await FGStore.set({
-      remoteNodes: FGStore.dedupe(result.nodes),
+      remoteNodes: sync.nodes,
+      repoCounts: counts,
       lastUpdate: Date.now(),
-      lastUpdateMessage: `已同步 ${result.nodes.length} 个节点 · ${result.source}`,
+      lastUpdateMessage: `已同步 ${sync.okCount}/${totalSources} 个源 · 去重后 ${
+        FGStore.mergeStats(FGStore.allNodes({ ...settings, remoteNodes: sync.nodes }))
+          .unique
+      } 个节点`,
     });
-    fillForm();
-    fillSelects();
-    renderNodes();
-    renderStats();
-    toast(`同步成功：${before} → ${FGStore.allNodes(settings).length} 个节点`, "ok");
+    refresh({ repos: true });
+    toast(
+      `同步成功：${before} → ${FGStore.allNodes(settings).length} 个节点（${sync.okCount}/${totalSources} 个源）`,
+      "ok",
+    );
   } else {
     settings = await FGStore.set({
-      lastUpdateMessage: `同步失败：${result.error.slice(0, 120)}`,
+      repoCounts: counts,
+      lastUpdateMessage: `同步失败：${String(sync.results[0]?.error ?? "").slice(0, 120)}`,
     });
-    fillForm();
-    toast("节点同步失败，已尝试全部镜像源", "err");
+    refresh({ repos: true });
+    toast("节点同步失败，已尝试全部节点源", "err");
   }
 
   if (spinner) spinner.hidden = true;
@@ -546,7 +792,15 @@ async function syncNow() {
 
 /* ------------------------------ 事件绑定 ------------------------------ */
 
+/** 给输入框绑定「回车执行」 */
+function onEnter(id, action) {
+  $(id)?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") action();
+  });
+}
+
 function bind() {
+  // 侧边栏导航
   $("nav")?.addEventListener("click", (event) => {
     const button = /** @type {HTMLElement} */ (event.target).closest(".nav-item");
     if (!button) return;
@@ -574,15 +828,32 @@ function bind() {
     });
   }
 
+  /** id -> 处理函数，统一绑定 click */
+  const clicks = {
+    btnSaveBottom: collectAndSave,
+    btnSyncNow: syncNow,
+    btnAddNode: addNode,
+    btnTestAll: () => testNodes(true),
+    btnTestLatency: () => testNodes(false),
+    btnDedupe: dedupeNow,
+    btnProbe: probeHostsNow,
+    btnRouteTest: routeCheck,
+    btnProbeCaps: probeCapsNow,
+    btnAddRule: addRule,
+    btnResetRules: resetRules,
+    btnClearRules: clearRules,
+    btnTestUrl: checkUrl,
+  };
+  for (const [id, action] of Object.entries(clicks)) {
+    $(id)?.addEventListener("click", action);
+  }
+
+  onEnter("customNodeInput", addNode);
+  onEnter("routeTestInput", routeCheck);
+  onEnter("ruleInput", addRule);
+  onEnter("testUrlInput", checkUrl);
+
   $("updateSources")?.addEventListener("input", markDirty);
-  $("btnSaveBottom")?.addEventListener("click", collectAndSave);
-  $("btnSyncNow")?.addEventListener("click", syncNow);
-  $("btnAddNode")?.addEventListener("click", addNode);
-  $("customNodeInput")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") addNode();
-  });
-  $("btnTestAll")?.addEventListener("click", () => testNodes(true));
-  $("btnTestLatency")?.addEventListener("click", () => testNodes(false));
   $("nodeSearch")?.addEventListener("input", renderNodes);
   $("nodeFilter")?.addEventListener("change", renderNodes);
 
@@ -608,22 +879,18 @@ function bind() {
     }
   });
 
-  $("btnAddRule")?.addEventListener("click", addRule);
-  $("ruleInput")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") addRule();
+  $("repoList")?.addEventListener("change", (event) => {
+    const input = /** @type {HTMLInputElement} */ (event.target);
+    const id = input.getAttribute("data-repo");
+    if (id) toggleRepo(id, input.checked);
   });
-  $("btnResetRules")?.addEventListener("click", resetRules);
-  $("btnClearRules")?.addEventListener("click", clearRules);
+
   $("ruleList")?.addEventListener("click", (event) => {
     const button = /** @type {HTMLElement} */ (event.target).closest(
       "button[data-index]",
     );
     if (!button) return;
     removeRule(Number(button.getAttribute("data-index")));
-  });
-  $("btnTestUrl")?.addEventListener("click", checkUrl);
-  $("testUrlInput")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") checkUrl();
   });
 
   window.addEventListener("beforeunload", (event) => {
@@ -638,11 +905,9 @@ async function boot() {
   settings = await FGStore.get();
   applyTheme();
   bind();
-  fillForm();
-  fillSelects();
-  renderNodes();
-  renderRules();
-  renderStats();
+  refresh({ repos: true });
+  renderProbes();
+  renderHealth();
   markSaved();
 }
 
