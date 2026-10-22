@@ -171,7 +171,7 @@ function injectProxyBanner(tabId) {
           "right:0",
           "z-index:2147483647",
           "padding:8px 14px",
-          "background:#b45309",
+          "background:#8a4b2b",
           "color:#fff",
           "font-size:13px",
           "text-align:center",
@@ -254,64 +254,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
   }
 });
 
-/* ---------------------------- 腾讯翻译(可选) ---------------------------- */
-
-const LANG_TABLE = {
-  arabic: "ar",
-  german: "de",
-  russian: "ru",
-  french: "fr",
-  filipino: "fil",
-  khmer: "km",
-  korean: "ko",
-  laos: "lo",
-  portuguese: "pt",
-  spanish: "es",
-  italian: "it",
-  indonesian: "id",
-  english: "en",
-  vietnamese: "vi",
-  chinese: "zh",
-};
-
-/**
- * @param {string} content
- * @returns {Promise<[string | null, string | null]>}
- */
-async function translateText(content) {
-  const settings = await FGStore.get();
-  if (!settings.token) return [null, "未配置腾讯 AI 翻译 Token"];
-  if (!settings.language || settings.language === "nothing") {
-    return [null, "未选择翻译目标语言"];
-  }
-
-  const post = (/** @type {unknown} */ body) =>
-    fetch("https://transmart.qq.com/api/imt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }).then((r) => r.json());
-
-  try {
-    const detect = await post({
-      header: { fn: "lang_detect", token: settings.token },
-      text: content,
-    });
-    const code = LANG_TABLE[String(detect?.language ?? "").toLowerCase()];
-    if (!code) return [null, "该语言无法识别"];
-
-    const translated = await post({
-      header: { fn: "auto_translation_block", token: settings.token },
-      type: "plain",
-      source: { lang: code, text_block: content },
-      target: { lang: settings.language },
-    });
-    return [translated?.auto_translation ?? null, null];
-  } catch {
-    return [null, "翻译发生错误"];
-  }
-}
-
 /* ------------------------------- 消息 ------------------------------- */
 
 /**
@@ -319,11 +261,6 @@ async function translateText(content) {
  * @type {Record<string, (msg: any, reply: (payload: unknown) => void) => unknown>}
  */
 const HANDLERS = {
-  translate: async (msg, reply) => {
-    const [data, error] = await translateText(msg.content);
-    reply({ content: data ?? error ?? "" });
-  },
-
   getSettings: async (_msg, reply) => {
     reply({ ok: true, settings: await FGStore.get() });
   },
@@ -406,10 +343,16 @@ const HANDLERS = {
   probeCapabilities: async (msg, reply) => {
     const result = await FGNet.probeCapabilities(msg.value, 8000);
     const settings = await FGStore.get();
+    const key = FGStore.nodeKey(msg.value);
+    // git 探测失败 => 下载专用；成功 => 可加速仓库（除非用户手动标注过）
+    const kind = result.git ? "full" : "download";
+    const nodeKinds = { ...(settings.nodeKinds ?? {}) };
+    if (nodeKinds[key] === undefined) nodeKinds[key] = kind;
     await FGStore.set({
-      capabilities: { ...(settings.capabilities ?? {}), [msg.value]: result },
+      capabilities: { ...(settings.capabilities ?? {}), [key]: result },
+      nodeKinds,
     });
-    reply({ ok: true, result });
+    reply({ ok: true, result, kind });
   },
 
   checkSensitive: async (msg, reply) => {
@@ -427,8 +370,7 @@ const HANDLERS = {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const msg = message ?? {};
-  // 兼容旧版：带 content 字段即视为翻译请求
-  const type = msg.type ?? (msg.content !== undefined ? "translate" : "");
+  const type = msg.type ?? "";
   const handler = HANDLERS[type];
   if (!handler) return false;
 
