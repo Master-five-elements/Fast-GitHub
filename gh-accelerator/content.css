@@ -7,7 +7,8 @@
   display: inline-flex;
   vertical-align: middle;
   margin-left: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Microsoft YaHei", Helvetica, Arial, sans-serif;
 }
 
@@ -18,25 +19,30 @@
   align-items: center;
   gap: 5px;
   height: 32px;
-  padding: 0 14px;
+  padding: 0 15px;
   border: 0;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b5bd6, #a855f7 70%, #06b6d4);
+  background-size: 180% 180%;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(91, 91, 214, 0.3);
-  transition: filter 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 10px rgba(91, 91, 214, 0.34);
+  transition:
+    background-position 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.2s ease,
+    transform 0.12s ease;
 }
 
 .fg-trigger:hover {
-  filter: brightness(1.08);
+  background-position: 100% 0;
+  box-shadow: 0 6px 18px rgba(91, 91, 214, 0.42);
 }
 
 .fg-trigger:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.985);
 }
 
 .fg-bolt {
@@ -52,75 +58,94 @@
 
 .fg-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
   z-index: 999;
-  width: 360px;
-  padding: 12px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #d8dee4;
-  box-shadow: 0 16px 40px rgba(31, 35, 40, 0.18);
   display: none;
+  width: 366px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(31, 35, 40, 0.1);
+  box-shadow:
+    0 2px 6px rgba(31, 35, 40, 0.06),
+    0 24px 48px -12px rgba(31, 35, 40, 0.28);
+  animation: fg-panel-in 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .fg-panel.is-open {
   display: block;
 }
 
+@keyframes fg-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .fg-panel-title {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 11px;
+  color: #1f2328;
   font-size: 13px;
   font-weight: 700;
-  color: #1f2328;
 }
 
 .fg-panel-sub {
+  color: #818b98;
   font-size: 11px;
   font-weight: 500;
-  color: #818b98;
 }
 
 .fg-chan {
-  padding: 9px 10px;
+  padding: 10px;
   margin-bottom: 8px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #f6f8fa;
-  border: 1px solid #eaeef2;
+  border: 1px solid rgba(31, 35, 40, 0.07);
+  transition: border-color 0.16s ease;
+}
+
+.fg-chan:hover {
+  border-color: rgba(91, 91, 214, 0.45);
 }
 
 .fg-chan-head {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
 .fg-chan-name {
+  overflow: hidden;
+  color: #1f2328;
   font-size: 12.5px;
   font-weight: 650;
-  color: #1f2328;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fg-chan-tag {
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 999px;
+  background: linear-gradient(135deg, #5b5bd6, #a855f7);
+  color: #fff;
   font-size: 10.5px;
   font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
 }
 
 .fg-chan-lat {
   margin-left: auto;
-  font-size: 11px;
   color: #1a7f37;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -130,60 +155,70 @@
 }
 
 .fg-chan-input {
-  flex: 1;
   min-width: 0;
-  height: 28px;
-  padding: 0 8px;
+  flex: 1;
+  height: 29px;
+  padding: 0 9px;
   border: 1px solid #d8dee4;
-  border-radius: 7px;
+  border-radius: 9px;
   background: #fff;
   color: #1f2328;
-  font-size: 11.5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
   outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .fg-chan-input:focus {
   border-color: #5b5bd6;
-  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.16);
+  box-shadow: 0 0 0 4px rgba(91, 91, 214, 0.16);
 }
 
 .fg-mini {
-  height: 28px;
-  padding: 0 10px;
+  height: 29px;
+  padding: 0 11px;
   border: 1px solid #d8dee4;
-  border-radius: 7px;
+  border-radius: 9px;
   background: #fff;
   color: #1f2328;
   font-size: 12px;
   font-weight: 550;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
   white-space: nowrap;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.12s ease;
 }
 
 .fg-mini:hover {
   border-color: #5b5bd6;
-  color: #5b5bd6;
   background: #f2f2ff;
+  color: #5b5bd6;
+}
+
+.fg-mini:active {
+  transform: scale(0.97);
 }
 
 .fg-mini-primary {
   border-color: transparent;
-  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  background: linear-gradient(135deg, #5b5bd6, #a855f7);
   color: #fff;
 }
 
 .fg-mini-primary:hover {
+  background: linear-gradient(135deg, #4f4fd0, #9333ea);
   color: #fff;
-  background: linear-gradient(135deg, #4f4fd0, #7c4dee);
 }
 
 .fg-panel-actions {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .fg-panel-actions .fg-mini {
@@ -197,7 +232,7 @@
   display: inline-flex;
   align-items: center;
   margin-left: 8px;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border: 1px solid #d8dee4;
   border-radius: 999px;
   background: #f6f8fa;
@@ -208,24 +243,28 @@
   line-height: 18px;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.12s ease;
 }
 
 .fg-dl {
   border-color: transparent;
-  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  background: linear-gradient(135deg, #5b5bd6, #a855f7);
   color: #fff;
 }
 
 .fg-ide:hover {
   border-color: #5b5bd6;
-  color: #5b5bd6;
   background: #f2f2ff;
+  color: #5b5bd6;
 }
 
 .fg-dl:hover {
-  filter: brightness(1.08);
+  transform: translateY(-1px);
   color: #fff;
+  filter: brightness(1.06);
 }
 
 /* ----------------------------- Release 加速 ----------------------------- */
@@ -234,19 +273,25 @@
   display: inline-flex;
   align-items: center;
   margin-left: 10px;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #5b5bd6, #8b5cf6);
+  background: linear-gradient(135deg, #5b5bd6, #a855f7);
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖 GitHub 原生链接颜色 */
   color: #fff !important;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    filter 0.16s ease,
+    transform 0.12s ease;
 }
 
 .fg-accel:hover {
-  filter: brightness(1.08);
+  transform: translateY(-1px);
+  /* biome-ignore lint/complexity/noImportantStyles: 需覆盖 GitHub 原生链接颜色 */
   color: #fff !important;
+  filter: brightness(1.08);
 }
 
 /* ------------------------------- 翻译 ------------------------------- */
@@ -254,7 +299,7 @@
 .fg-trans {
   display: inline-block;
   margin-top: 8px;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border: 1px solid #d8dee4;
   border-radius: 999px;
   background: #f6f8fa;
@@ -262,6 +307,7 @@
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
+  transition: border-color 0.16s ease;
 }
 
 .fg-trans:hover {
@@ -270,10 +316,10 @@
 
 .fg-trans-out {
   margin-top: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 13px 15px;
+  border-radius: 12px;
   background: #f6f8fa;
-  border: 1px solid #eaeef2;
+  border: 1px solid rgba(31, 35, 40, 0.07);
   font-size: 13px;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -285,19 +331,21 @@
   position: fixed;
   left: 50%;
   bottom: 32px;
-  transform: translate(-50%, 12px);
   z-index: 100000;
-  padding: 9px 18px;
-  border-radius: 10px;
+  padding: 10px 20px;
+  border-radius: 12px;
   background: rgba(31, 35, 40, 0.94);
+  backdrop-filter: blur(10px);
   color: #fff;
   font-size: 13px;
   font-weight: 550;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32);
   opacity: 0;
+  transform: translate(-50%, 12px);
   pointer-events: none;
-  transition: all 0.22s ease;
+  transition: all 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 #fg-flash.is-show {
@@ -305,13 +353,13 @@
   transform: translate(-50%, 0);
 }
 
-/* ============================ GitHub 深色主题 ============================ */
+/* --------------------------- GitHub 深色适配 --------------------------- */
 
 html[data-color-mode="dark"] .fg-panel,
 html[data-dark-theme="dark"] .fg-panel {
   background: #161b22;
   border-color: #30363d;
-  box-shadow: 0 16px 40px rgba(1, 4, 9, 0.7);
+  box-shadow: 0 24px 48px -12px rgba(1, 4, 9, 0.8);
 }
 
 html[data-color-mode="dark"] .fg-panel-title,
@@ -344,6 +392,11 @@ html[data-dark-theme="dark"] .fg-mini {
   color: #e6edf3;
 }
 
+html[data-color-mode="dark"] .fg-mini:hover,
+html[data-dark-theme="dark"] .fg-mini:hover {
+  background: #262c36;
+}
+
 html[data-color-mode="dark"] .fg-ide,
 html[data-dark-theme="dark"] .fg-ide {
   background: #21262d;
@@ -363,28 +416,4 @@ html[data-dark-theme="dark"] .fg-trans-out {
   background: #0d1117;
   border-color: #30363d;
   color: #e6edf3;
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-panel {
-    background: #161b22;
-    border-color: #30363d;
-  }
-  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-panel-title {
-    color: #e6edf3;
-  }
-  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-chan {
-    background: #0d1117;
-    border-color: #30363d;
-  }
-  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-chan-input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
-  }
-  html:not([data-color-mode="light"]):not([data-light-theme="light"]) .fg-mini {
-    background: #21262d;
-    border-color: #30363d;
-    color: #e6edf3;
-  }
 }
