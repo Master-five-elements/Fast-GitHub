@@ -295,6 +295,120 @@
   gap: 8px;
 }
 
+/* ------------------------- 路由与诊断 ------------------------- */
+
+.probe-list,
+.health-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.probe-item,
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid var(--fg-border);
+  border-radius: var(--fg-radius-sm);
+  background: var(--fg-surface-2);
+}
+
+.probe-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.probe-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.health-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.probe-desc {
+  margin-top: 2px;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+}
+
+.route-reason {
+  margin-top: 8px;
+  color: var(--fg-text-2);
+  font-size: 12.5px;
+}
+
+.route-target {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: var(--fg-radius-xs);
+  background: var(--fg-surface-2);
+  color: var(--fg-accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------- 节点仓库 ---------------------------- */
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--fg-border);
+  border-radius: var(--fg-radius-sm);
+  background: var(--fg-surface-2);
+  transition: border-color 0.16s var(--fg-ease);
+}
+
+.repo-item:hover {
+  border-color: var(--fg-accent);
+}
+
+.repo-main {
+  min-width: 0;
+}
+
+.repo-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.repo-name a {
+  color: var(--fg-accent);
+  text-decoration: none;
+}
+
+.repo-name a:hover {
+  text-decoration: underline;
+}
+
+.repo-desc {
+  margin-top: 3px;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+}
+
 /* ---------------------------- 白名单规则 ---------------------------- */
 
 .rule-list {
