@@ -31,13 +31,13 @@ DEFAULT_OWNER = "Master-five-elements"
 DEFAULT_REPO = "Fast-GitHub"
 DEFAULT_BRANCH = "main"
 COMMIT_MESSAGE = (
-    "feat(gh-accelerator): 发布 v2.3.1 智能路由版\n\n"
-    "- 新增 jsDelivr CDN 通道与按域名智能路由（lib/routes.js）\n"
-    "- 域名连通性探测：两轮重试 + 每 6 小时定期探测\n"
-    "- 节点能力探测（Range / git smart HTTP）与健康度评分\n"
-    "- 设置页自定义节点源接入同步，清空即移除\n"
-    "- 代码精简：消息处理映射表与共用助手（fetchWithTimeout/headProbe/rankedNodes）\n"
-    "- 新增 legacy/ 过往版本存档，删除旧版 zip/ 打包目录"
+    "feat(gh-accelerator): 发布 v2.4.0 节点分类 + 星露谷 UI 版\n\n"
+    "- 节点仓库由 3 个扩至 8 个，并按「可加速仓库 / 仅下载专用」能力分类\n"
+    "- 移除早期「页面增强」模块（Web IDE 入口与 Issue 翻译），聚焦核心加速\n"
+    "- 设置页与弹窗改为星露谷素风 UI（暖色羊皮纸 + 木色粗边框 + 硬阴影）\n"
+    "- 重复节点查重合并：sources 合并 + 保留非本仓库来源\n"
+    "- 8 种清单解析器，channels(\"full\") 仅返回可加速节点\n"
+    "- 版本号实时更新至 v2.4.0"
 )
 
 SKIP_DIRS = {"__pycache__", ".git"}
