@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""删除仓库中已被本地重构淘汰的文件（需各自提供 sha 才能删除）"""
+"""删除仓库中不再需要的文件（需各自提供 sha 才能删除）"""
 
 import json
 import os
@@ -12,13 +12,15 @@ REPO = "Fast-GitHub"
 BRANCH = "main"
 
 TARGETS = [
-    "gh-accelerator/lib/default-nodes.js",
-    "gh-accelerator/preview/chrome-mock.js",
-    "gh-accelerator/preview/options.html",
-    "gh-accelerator/preview/popup.html",
-    "tools/smoke_test.js",
-    "tools/render_test.js",
-    "tools/make_preview.py",
+    "zip/v1.5.2.zip",
+    "zip/v1.5.3.zip",
+    "zip/v1.5.4.zip",
+    "zip/v1.5.5.zip",
+    "zip/v1.5.6.zip",
+    "zip/v1.5.7.zip",
+    "zip/v1.5.8.zip",
+    "zip/v1.5.9.zip",
+    "zip/v1.5.10.zip",
 ]
 
 
