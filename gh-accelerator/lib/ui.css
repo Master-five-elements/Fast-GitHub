@@ -1,67 +1,69 @@
 /* ==================================================================
- * FastGitHub · Design System 2026
- * 大圆角 / 多层柔和阴影 / 玻璃态 / 渐变强调 / 微交互
+ * FastGitHub · 星露谷素风（Stardew Valley cozy / rustic）
+ * 暖色羊皮纸 + 木色粗边框 + 硬阴影（无模糊）+ 质朴圆角
  * ================================================================== */
 
 :root {
-  --fg-bg: #f7f7fb;
-  --fg-bg-glow:
-    radial-gradient(1200px 600px at 15% -10%, rgba(99, 102, 241, 0.1), transparent 60%),
-    radial-gradient(900px 500px at 95% 0%, rgba(168, 85, 247, 0.09), transparent 55%);
-  --fg-surface: #ffffff;
-  --fg-surface-2: #fbfbfd;
-  --fg-surface-glass: rgba(255, 255, 255, 0.72);
-  --fg-border: rgba(17, 24, 39, 0.08);
-  --fg-border-strong: rgba(17, 24, 39, 0.14);
-  --fg-text: #0d1117;
-  --fg-text-2: #4a5567;
-  --fg-muted: #8b95a7;
-  --fg-accent: #5b5bd6;
-  --fg-accent-2: #a855f7;
-  --fg-accent-3: #06b6d4;
-  --fg-accent-soft: rgba(91, 91, 214, 0.09);
-  --fg-green: #10a37f;
-  --fg-green-soft: rgba(16, 163, 127, 0.12);
-  --fg-amber: #d97706;
-  --fg-amber-soft: rgba(217, 119, 6, 0.12);
-  --fg-red: #e5484d;
-  --fg-red-soft: rgba(229, 72, 77, 0.12);
-  --fg-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.05);
-  --fg-shadow-2: 0 1px 3px rgba(16, 24, 40, 0.04), 0 8px 24px -6px rgba(16, 24, 40, 0.1);
-  --fg-shadow-3:
-    0 2px 6px rgba(16, 24, 40, 0.05), 0 24px 48px -12px rgba(16, 24, 40, 0.18);
-  --fg-radius: 18px;
-  --fg-radius-sm: 12px;
-  --fg-radius-xs: 9px;
+  /* 羊皮纸 / 木色基底 */
+  --fg-bg: #ece0c2;
+  --fg-surface: #fbf3dc;
+  --fg-surface-2: #f2e6c5;
+  --fg-surface-glass: rgba(251, 243, 220, 0.86);
+  --fg-wood: #7a4f2a;
+  --fg-wood-soft: #b78a55;
+  --fg-border: #d8c293;
+  --fg-border-strong: var(--fg-wood);
+  /* 文字 */
+  --fg-text: #43321c;
+  --fg-text-2: #6e5638;
+  --fg-muted: #9c8763;
+  /* 强调色：叶绿 / 蜜黄 / 河蓝 */
+  --fg-accent: #6a994e;
+  --fg-accent-2: #e0a830;
+  --fg-accent-3: #527a96;
+  --fg-accent-soft: #dcebcb;
+  --fg-green: #6a994e;
+  --fg-green-soft: #dcebcb;
+  --fg-amber: #d98a3d;
+  --fg-amber-soft: #f6e0bf;
+  --fg-red: #c14a32;
+  --fg-red-soft: #f3d3c8;
+  /* 硬阴影（无模糊，星露谷标志） */
+  --fg-shadow-hard: 3px 3px 0 rgba(58, 38, 18, 0.22);
+  --fg-shadow-hard-hover: 5px 5px 0 rgba(58, 38, 18, 0.24);
+  --fg-shadow-hard-press: 1px 1px 0 rgba(58, 38, 18, 0.24);
+  --fg-radius: 10px;
+  --fg-radius-sm: 8px;
+  --fg-radius-xs: 6px;
   --fg-ease: cubic-bezier(0.32, 0.72, 0, 1);
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --fg-bg: #08080d;
-  --fg-bg-glow:
-    radial-gradient(1200px 600px at 15% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
-    radial-gradient(900px 500px at 95% 0%, rgba(168, 85, 247, 0.13), transparent 55%);
-  --fg-surface: #12121a;
-  --fg-surface-2: #17171f;
-  --fg-surface-glass: rgba(18, 18, 26, 0.72);
-  --fg-border: rgba(255, 255, 255, 0.09);
-  --fg-border-strong: rgba(255, 255, 255, 0.16);
-  --fg-text: #eceef2;
-  --fg-text-2: #a8b0bd;
-  --fg-muted: #6f7885;
-  --fg-accent: #8b8bf0;
-  --fg-accent-2: #c084fc;
-  --fg-accent-soft: rgba(139, 139, 240, 0.14);
-  --fg-green: #3dd68c;
-  --fg-green-soft: rgba(61, 214, 140, 0.14);
-  --fg-amber: #f5a524;
-  --fg-amber-soft: rgba(245, 165, 36, 0.14);
-  --fg-red: #ff6369;
-  --fg-red-soft: rgba(255, 99, 105, 0.14);
-  --fg-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --fg-shadow-2: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px -6px rgba(0, 0, 0, 0.5);
-  --fg-shadow-3: 0 2px 6px rgba(0, 0, 0, 0.45), 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+  --fg-bg: #2b2620;
+  --fg-surface: #3a342b;
+  --fg-surface-2: #443d31;
+  --fg-surface-glass: rgba(58, 52, 43, 0.88);
+  --fg-wood: #8a6a45;
+  --fg-wood-soft: #a98456;
+  --fg-border: #5a4d3a;
+  --fg-border-strong: var(--fg-wood);
+  --fg-text: #f1e7d2;
+  --fg-text-2: #c8b594;
+  --fg-muted: #9a876a;
+  --fg-accent: #8fb573;
+  --fg-accent-2: #e7b64a;
+  --fg-accent-3: #7ba3bd;
+  --fg-accent-soft: #3c4a31;
+  --fg-green: #8fb573;
+  --fg-green-soft: #3c4a31;
+  --fg-amber: #e7b64a;
+  --fg-amber-soft: #4d3f2a;
+  --fg-red: #e0735a;
+  --fg-red-soft: #4d3128;
+  --fg-shadow-hard: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  --fg-shadow-hard-hover: 5px 5px 0 rgba(0, 0, 0, 0.45);
+  --fg-shadow-hard-press: 1px 1px 0 rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
 
@@ -72,16 +74,20 @@
 body.fg-body {
   margin: 0;
   font-family:
-    "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", Helvetica, Arial, sans-serif;
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", Verdana, "Helvetica Neue", Helvetica,
+    Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
   color: var(--fg-text);
   background-color: var(--fg-bg);
-  background-image: var(--fg-bg-glow);
-  background-repeat: no-repeat;
+  /* 农田般的细点纹理，营造素风质感 */
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(122, 79, 42, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* ------------------------------- 卡片 ------------------------------- */
@@ -89,23 +95,17 @@ body.fg-body {
 .fg-card {
   padding: 20px;
   background: var(--fg-surface);
-  border: 1px solid var(--fg-border);
+  border: 2px solid var(--fg-wood);
   border-radius: var(--fg-radius);
-  box-shadow: var(--fg-shadow-1);
-  transition:
-    box-shadow 0.25s var(--fg-ease),
-    transform 0.25s var(--fg-ease);
-}
-
-.fg-card:hover {
-  box-shadow: var(--fg-shadow-2);
+  box-shadow: var(--fg-shadow-hard);
 }
 
 .fg-section-title {
   margin: 0 0 4px;
   font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.011em;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--fg-text);
 }
 
 .fg-section-desc {
@@ -123,70 +123,74 @@ body.fg-body {
   gap: 6px;
   height: 36px;
   padding: 0 15px;
-  border: 1px solid var(--fg-border-strong);
+  border: 2px solid var(--fg-wood);
   border-radius: var(--fg-radius-sm);
-  background: var(--fg-surface);
-  color: var(--fg-text-2);
+  background: var(--fg-surface-2);
+  color: var(--fg-text);
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--fg-shadow-hard);
   transition:
-    transform 0.16s var(--fg-ease),
-    border-color 0.16s var(--fg-ease),
-    background 0.16s var(--fg-ease),
-    box-shadow 0.16s var(--fg-ease);
+    transform 0.12s var(--fg-ease),
+    box-shadow 0.12s var(--fg-ease),
+    background 0.16s var(--fg-ease);
 }
 
 .fg-btn:hover {
-  border-color: var(--fg-accent);
-  color: var(--fg-accent);
-  background: var(--fg-accent-soft);
-  transform: translateY(-1px);
-  box-shadow: var(--fg-shadow-1);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--fg-shadow-hard-hover);
+  background: var(--fg-surface);
 }
 
 .fg-btn:active {
-  transform: translateY(0) scale(0.985);
+  transform: translate(2px, 2px);
+  box-shadow: var(--fg-shadow-hard-press);
 }
 
 .fg-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  box-shadow: var(--fg-shadow-hard);
 }
 
 .fg-btn-primary {
-  border-color: transparent;
-  background: linear-gradient(
-    135deg,
-    var(--fg-accent),
-    var(--fg-accent-2) 70%,
-    var(--fg-accent-3)
-  );
-  background-size: 180% 180%;
+  border-color: #4d7433;
+  background: var(--fg-accent);
   color: #fff;
-  box-shadow: 0 2px 10px rgba(91, 91, 214, 0.32);
 }
 
 .fg-btn-primary:hover {
+  background: #5b8a40;
   color: #fff;
-  background-position: 100% 0;
-  box-shadow: 0 6px 18px rgba(91, 91, 214, 0.4);
+}
+
+.fg-btn-danger {
+  border-color: #8f3320;
+  background: var(--fg-red);
+  color: #fff;
 }
 
 .fg-btn-danger:hover {
-  border-color: var(--fg-red);
-  color: var(--fg-red);
-  background: var(--fg-red-soft);
+  background: #ad3f29;
+  color: #fff;
 }
 
 .fg-btn-sm {
   height: 30px;
   padding: 0 11px;
   font-size: 12px;
+  border-width: 2px;
   border-radius: var(--fg-radius-xs);
+  box-shadow: 2px 2px 0 rgba(58, 38, 18, 0.22);
+}
+
+.fg-btn-sm:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 rgba(58, 38, 18, 0.24);
 }
 
 /* ------------------------------ 表单控件 ------------------------------ */
@@ -199,7 +203,7 @@ body.fg-body {
   display: block;
   margin-bottom: 6px;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--fg-text-2);
 }
 
@@ -208,7 +212,7 @@ body.fg-body {
 .fg-textarea {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--fg-border-strong);
+  border: 2px solid var(--fg-wood-soft);
   border-radius: var(--fg-radius-sm);
   background: var(--fg-surface);
   color: var(--fg-text);
@@ -230,8 +234,9 @@ body.fg-body {
 .fg-select:focus,
 .fg-textarea:focus {
   border-color: var(--fg-accent);
-  box-shadow: 0 0 0 4px var(--fg-accent-soft);
+  box-shadow: 0 0 0 3px var(--fg-accent-soft);
 }
+
 .fg-hint {
   margin-top: 6px;
   font-size: 12px;
@@ -239,7 +244,8 @@ body.fg-body {
 }
 
 .fg-hint a {
-  color: var(--fg-accent);
+  color: #4d7433;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -252,8 +258,8 @@ body.fg-body {
 .fg-switch {
   position: relative;
   display: inline-flex;
-  width: 42px;
-  height: 24px;
+  width: 44px;
+  height: 26px;
   flex: none;
   cursor: pointer;
 }
@@ -270,26 +276,28 @@ body.fg-body {
 .fg-switch-track {
   position: absolute;
   inset: 0;
+  border: 2px solid var(--fg-wood);
   border-radius: 999px;
-  background: var(--fg-border-strong);
+  background: var(--fg-surface-2);
+  box-shadow: var(--fg-shadow-hard-press);
   transition: background 0.22s var(--fg-ease);
 }
 
 .fg-switch-track::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: 2px;
+  left: 2px;
   width: 18px;
   height: 18px;
+  border: 2px solid var(--fg-wood);
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+  background: var(--fg-surface);
   transition: transform 0.22s var(--fg-ease);
 }
 
 .fg-switch input:checked + .fg-switch-track {
-  background: linear-gradient(135deg, var(--fg-accent), var(--fg-accent-2));
+  background: var(--fg-accent);
 }
 
 .fg-switch input:checked + .fg-switch-track::after {
@@ -315,7 +323,7 @@ body.fg-body {
   justify-content: space-between;
   gap: 14px;
   padding: 14px 0;
-  border-bottom: 1px solid var(--fg-border);
+  border-bottom: 2px dashed var(--fg-border);
 }
 
 .fg-row:last-child {
@@ -324,7 +332,8 @@ body.fg-body {
 
 .fg-row-title {
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--fg-text);
 }
 
 .fg-row-sub {
@@ -340,37 +349,37 @@ body.fg-body {
   align-items: center;
   gap: 4px;
   padding: 3px 9px;
-  border: 1px solid var(--fg-border);
-  border-radius: 999px;
+  border: 1.5px solid var(--fg-wood-soft);
+  border-radius: var(--fg-radius-xs);
   background: var(--fg-surface-2);
   color: var(--fg-text-2);
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .fg-badge-good {
-  border-color: transparent;
+  border-color: rgba(106, 153, 78, 0.6);
   background: var(--fg-green-soft);
-  color: var(--fg-green);
+  color: #3f6b2a;
 }
 
 .fg-badge-mid {
-  border-color: transparent;
+  border-color: rgba(217, 138, 61, 0.6);
   background: var(--fg-amber-soft);
-  color: var(--fg-amber);
+  color: #9a5a18;
 }
 
 .fg-badge-bad {
-  border-color: transparent;
+  border-color: rgba(193, 74, 50, 0.6);
   background: var(--fg-red-soft);
-  color: var(--fg-red);
+  color: #a43a25;
 }
 
 .fg-badge-accent {
-  border-color: transparent;
+  border-color: rgba(106, 153, 78, 0.6);
   background: var(--fg-accent-soft);
-  color: var(--fg-accent);
+  color: #3f6b2a;
 }
 
 /* ------------------------------ 提示条 ------------------------------ */
@@ -389,21 +398,21 @@ body.fg-body {
   min-width: 200px;
   max-width: 340px;
   padding: 11px 15px;
-  border: 1px solid var(--fg-border);
+  border: 2px solid var(--fg-wood);
   border-radius: var(--fg-radius-sm);
-  background: var(--fg-surface-glass);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--fg-shadow-3);
+  background: var(--fg-surface);
+  box-shadow: var(--fg-shadow-hard);
   font-size: 13px;
-  animation: fg-toast-in 0.28s var(--fg-ease);
+  font-weight: 600;
+  animation: fg-toast-in 0.22s var(--fg-ease);
 }
 
 .fg-toast.is-ok {
-  border-left: 3px solid var(--fg-green);
+  border-left: 5px solid var(--fg-green);
 }
 
 .fg-toast.is-err {
-  border-left: 3px solid var(--fg-red);
+  border-left: 5px solid var(--fg-red);
 }
 
 @keyframes fg-toast-in {
@@ -422,7 +431,7 @@ body.fg-body {
 .fg-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--fg-border-strong);
+  border: 3px solid var(--fg-wood-soft);
   border-top-color: var(--fg-accent);
   border-radius: 50%;
   animation: fg-spin 0.7s linear infinite;
@@ -436,10 +445,11 @@ body.fg-body {
 }
 
 .fg-progress {
-  height: 6px;
+  height: 8px;
   overflow: hidden;
+  border: 2px solid var(--fg-wood);
   border-radius: 999px;
-  background: var(--fg-border);
+  background: var(--fg-surface-2);
 }
 
 .fg-progress > i {
@@ -447,7 +457,7 @@ body.fg-body {
   width: 0;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--fg-accent), var(--fg-accent-2));
+  background: var(--fg-accent);
   transition: width 0.25s var(--fg-ease);
 }
 
