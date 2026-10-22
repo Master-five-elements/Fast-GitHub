@@ -107,11 +107,8 @@ const FIELDS = /** @type {const} */ ([
   { id: "protectSensitive", key: "protectSensitive", type: "check" },
   { id: "fallbackNode", key: "fallbackNode", type: "value" },
   { id: "speedTestUrl", key: "speedTestUrl", type: "value" },
-  { id: "webIDE", key: "webIDE", type: "value" },
   { id: "routeMode", key: "routeMode", type: "value" },
   { id: "useJsDelivr", key: "useJsDelivr", type: "check" },
-  { id: "token", key: "token", type: "value" },
-  { id: "language", key: "language", type: "value" },
   { id: "theme", key: "theme", type: "value" },
 ]);
 
@@ -193,10 +190,13 @@ async function collectAndSave() {
 
 function renderStats() {
   if (!settings) return;
-  const total = FGStore.activeNodes(settings).length;
+  const all = FGStore.activeNodes(settings);
+  const total = all.length;
   const best = FGStore.bestNode(settings);
   const stat = FGStore.statOf(settings, best);
+  const full = all.filter((n) => FGStore.kindOf(settings, n.value) === "full").length;
   $("statTotal").textContent = `${total} 个`;
+  $("statTotal").title = `可加速仓库 ${full} 个 · 仅下载 ${total - full} 个`;
   $("statBest").textContent = best || "—";
   $("statBest").title = best ?? "";
   $("statLatency").textContent = stat?.latency
@@ -232,6 +232,10 @@ function renderNodes() {
   if (filter === "enabled") list = list.filter((n) => !n.disabled);
   if (filter === "disabled") list = list.filter((n) => n.disabled);
   if (filter === "custom") list = list.filter((n) => n.custom);
+  if (filter === "full")
+    list = list.filter((n) => FGStore.kindOf(settings, n.value) === "full");
+  if (filter === "download")
+    list = list.filter((n) => FGStore.kindOf(settings, n.value) === "download");
   if (keyword) list = list.filter((n) => n.value.toLowerCase().includes(keyword));
   list = sortNodes(list);
 
@@ -244,6 +248,9 @@ function renderNodes() {
         const latency = fmtLatency(stat?.latency);
         const speed = stat?.speed && stat.speed !== "-" ? stat.speed : null;
         const isBest = node.value === best;
+        const kind = FGStore.kindOf(settings, node.value);
+        const kindCls = kind === "full" ? "fg-badge-good" : "fg-badge-mid";
+        const kindText = kind === "full" ? "可加速仓库" : "仅下载";
         return `
       <div class="node-item${node.disabled ? " is-disabled" : ""}${
         isBest ? " is-best" : ""
@@ -251,6 +258,11 @@ function renderNodes() {
         <div class="node-domain">
           ${isBest ? '<span class="fg-badge fg-badge-accent">最优</span>' : ""}
           <span class="node-domain-text" title="${node.value}">${node.value}</span>
+          <span class="fg-badge ${kindCls}" title="${
+            kind === "full"
+              ? "支持 clone / git，可加速仓库"
+              : "只能下载文件，不能加速仓库"
+          }">${kindText}</span>
           <span class="fg-badge">${
             node.custom
               ? "自定义"
@@ -279,6 +291,13 @@ function renderNodes() {
             ${node.disabled ? "启用" : "停用"}
           </button>
           <button class="fg-btn fg-btn-sm" type="button" data-act="use">首选</button>
+          <button
+            class="fg-btn fg-btn-sm"
+            type="button"
+            data-act="kind"
+            title="切换该节点的能力分类"
+            >${kind === "full" ? "标为仅下载" : "标为可加速"}</button
+          >
           ${
             node.custom
               ? '<button class="fg-btn fg-btn-sm fg-btn-danger" type="button" data-act="del">删除</button>'
@@ -471,7 +490,7 @@ function renderMergeInfo() {
     : "尚未同步任何仓库";
 }
 
-/** 立即去重并写回：统一域名写法、合并重复项 */
+/** 立即去重并写回：统一域名写法、合并重复项（保留完整 sources，避免下次同步重复复活） */
 async function dedupeNow() {
   if (!settings) return;
   const raw = [...(settings.remoteNodes ?? []), ...(settings.customNodes ?? [])];
@@ -480,6 +499,7 @@ async function dedupeNow() {
   const remoteNodes = FGStore.dedupe(settings.remoteNodes ?? []).map((node) => ({
     value: node.value,
     label: node.label ?? "remote",
+    sources: node.sources ?? [],
     source: (node.sources ?? [])[0] ?? "remote",
   }));
   const customNodes = FGStore.dedupe(settings.customNodes ?? []).map((node) => ({
@@ -530,6 +550,15 @@ async function useNode(value) {
   renderNodes();
   renderStats();
   toast(`已设为首选节点：${value}`, "ok");
+}
+
+/** 手动切换节点的能力分类（可加速仓库 / 仅下载） */
+async function toggleKind(value) {
+  const current = FGStore.kindOf(settings, value);
+  const next = current === "full" ? "download" : "full";
+  settings = await FGStore.setNodeKind(value, next);
+  renderNodes();
+  toast(`${value} → ${next === "full" ? "可加速仓库" : "仅下载文件"}`, "ok");
 }
 
 async function addNode() {
@@ -870,6 +899,9 @@ function bind() {
         break;
       case "use":
         useNode(value);
+        break;
+      case "kind":
+        toggleKind(value);
         break;
       case "test":
         testOne(value);
