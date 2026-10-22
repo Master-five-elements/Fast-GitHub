@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub 加速 · 设置</title>
+    <link rel="stylesheet" href="../lib/ui.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body class="fg-body">
+    <div class="fg-toast-wrap" id="toastWrap"></div>
+
+    <div class="app">
+      <aside class="side">
+        <div class="brand">
+          <div class="brand-logo">GH</div>
+          <div class="brand-text">
+            <div class="brand-name">GitHub 加速</div>
+            <div class="brand-sub">智能节点版 v2.2.0</div>
+          </div>
+        </div>
+
+        <nav class="nav" id="nav">
+          <button class="nav-item is-active" type="button" data-tab="nodes">
+            <span class="nav-ico">⚡</span>节点管理
+          </button>
+          <button class="nav-item" type="button" data-tab="guard">
+            <span class="nav-ico">🛡</span>登录保护
+          </button>
+          <button class="nav-item" type="button" data-tab="general">
+            <span class="nav-ico">⚙</span>通用设置
+          </button>
+          <button class="nav-item" type="button" data-tab="about">
+            <span class="nav-ico">ⓘ</span>关于
+          </button>
+        </nav>
+
+        <div class="side-foot">
+          <button class="fg-btn fg-btn-primary" id="btnSaveBottom" type="button">
+            保存设置
+          </button>
+          <div class="side-note" id="saveState">尚未修改</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="stats" id="statsRow">
+          <div class="stat">
+            <div class="stat-label">可用节点</div>
+            <div class="stat-value" id="statTotal">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">当前最优</div>
+            <div class="stat-value" id="statBest">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">最优延迟</div>
+            <div class="stat-value" id="statLatency">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">最近同步</div>
+            <div class="stat-value" id="statSync">—</div>
+          </div>
+        </section>
+
+        <!-- ============ 节点管理 ============ -->
+        <section class="tab-panel is-active" data-panel="nodes">
+          <div class="fg-card">
+            <h2 class="fg-section-title">节点自动更新</h2>
+            <p class="fg-section-desc">
+              每 24 小时从 ghproxy-next 仓库同步一次社区公益节点，失败自动降级到备用镜像。
+            </p>
+
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">开启自动更新</div>
+                <div class="fg-row-sub">关闭后只使用已缓存的节点</div>
+              </div>
+              <label class="fg-switch"><span class="fg-sr-only">开启自动更新</span>
+                <input type="checkbox" id="autoUpdate" />
+                <span class="fg-switch-track"></span>
+              </label>
+            </div>
+
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">更新间隔（小时）</div>
+                <div class="fg-row-sub">默认 24 小时，最小 1 小时</div>
+              </div>
+              <input
+                class="fg-input"
+                type="number"
+                id="updateIntervalHours"
+                min="1"
+                max="168"
+                style="width: 110px"
+              />
+            </div>
+
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">同步状态</div>
+                <div class="fg-row-sub" id="syncMessage">—</div>
+              </div>
+              <button class="fg-btn" id="btnSyncNow" type="button">
+                <span class="fg-spinner" id="syncSpinner" hidden></span>立即同步
+              </button>
+            </div>
+
+            <div class="fg-field" style="margin-top: 16px">
+              <label class="fg-label" for="updateSources"
+                >节点源地址（一行一个，按顺序降级）</label
+              >
+              <textarea id="updateSources" class="fg-textarea" spellcheck="false"></textarea>
+              <div class="fg-hint">
+                默认指向 <code>hubporg/ghproxy-next</code> 的
+                <code>components/nodes.ts</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <h2 class="fg-section-title" style="margin: 0">节点列表</h2>
+                <span class="fg-badge" id="nodeCount">0</span>
+              </div>
+              <div class="toolbar-right">
+                <input
+                  class="fg-input"
+                  id="nodeSearch"
+                  placeholder="搜索域名…"
+                  style="width: 150px"
+                />
+                <select class="fg-select" id="nodeFilter" style="width: 118px">
+                  <option value="all">全部</option>
+                  <option value="enabled">已启用</option>
+                  <option value="disabled">已停用</option>
+                  <option value="custom">自定义</option>
+                </select>
+                <button class="fg-btn" id="btnTestLatency" type="button">测延迟</button>
+                <button class="fg-btn fg-btn-primary" id="btnTestAll" type="button">
+                  完整测速
+                </button>
+              </div>
+            </div>
+
+            <div class="fg-progress" id="testProgress" hidden><i></i></div>
+            <div class="test-status" id="testStatus" hidden></div>
+
+            <div class="node-head">
+              <span>节点域名</span>
+              <span>延迟</span>
+              <span>带宽</span>
+              <span>操作</span>
+            </div>
+            <div class="node-list" id="nodeList"></div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">添加自定义节点</h2>
+            <p class="fg-section-desc">
+              自建 gh-proxy / Cloudflare Worker 均可添加，无需带 <code>https://</code> 前缀。
+            </p>
+            <div class="add-row">
+              <input
+                class="fg-input"
+                id="customNodeInput"
+                placeholder="例如：gh-proxy.example.com"
+              />
+              <button class="fg-btn fg-btn-primary" id="btnAddNode" type="button">
+                添加
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 登录保护 ============ -->
+        <section class="tab-panel" data-panel="guard">
+          <div class="fg-card">
+            <h2 class="fg-section-title">保护总开关</h2>
+            <p class="fg-section-desc">
+              公益节点会中转全部请求，登录必须走直连。开启后，命中规则的页面即使加载失败也
+              <b>不会</b>被自动代理。
+            </p>
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">保护登录与私有内容</div>
+                <div class="fg-row-sub">
+                  代理页面顶部同时显示安全提示条；私有仓库被访问时会自动加入保护名单
+                </div>
+              </div>
+              <label class="fg-switch"><span class="fg-sr-only">保护登录与私有内容</span>
+                <input type="checkbox" id="protectSensitive" />
+                <span class="fg-switch-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <h2 class="fg-section-title" style="margin: 0">白名单规则</h2>
+                <span class="fg-badge" id="ruleCount">0</span>
+              </div>
+              <div class="toolbar-right">
+                <button class="fg-btn fg-btn-sm" id="btnResetRules" type="button">
+                  恢复默认
+                </button>
+                <button class="fg-btn fg-btn-sm fg-btn-danger" id="btnClearRules" type="button">
+                  清空
+                </button>
+              </div>
+            </div>
+
+            <p class="fg-section-desc">
+              匹配对象为 URL 的路径部分（<code>/login</code> 这类），支持
+              <code>*</code> 通配单级路径段。命中的地址永不走代理。
+            </p>
+
+            <div class="rule-list" id="ruleList"></div>
+
+            <div class="add-row" style="margin-top: 14px">
+              <input
+                class="fg-input"
+                id="ruleInput"
+                placeholder="例如：/settings/* 或 /orgs/*/settings"
+              />
+              <button class="fg-btn fg-btn-primary" id="btnAddRule" type="button">
+                添加规则
+              </button>
+            </div>
+            <div class="fg-hint" id="ruleHint"></div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">规则自检</h2>
+            <p class="fg-section-desc">输入一个 GitHub 地址，验证它是否会被保护规则拦截。</p>
+            <div class="add-row">
+              <input
+                class="fg-input"
+                id="testUrlInput"
+                placeholder="https://github.com/login"
+              />
+              <button class="fg-btn" id="btnTestUrl" type="button">检测</button>
+            </div>
+            <div class="test-result" id="testUrlResult"></div>
+          </div>
+        </section>
+
+        <!-- ============ 通用设置 ============ -->
+        <section class="tab-panel" data-panel="general">
+          <div class="fg-card">
+            <h2 class="fg-section-title">加速策略</h2>
+            <p class="fg-section-desc">决定 GitHub 页面上「加速 / 下载」按钮使用哪个节点。</p>
+
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">启用插件功能</div>
+                <div class="fg-row-sub">关闭后不再注入页面按钮，也不再自动代理</div>
+              </div>
+              <label class="fg-switch"><span class="fg-sr-only">启用插件功能</span>
+                <input type="checkbox" id="enabled" />
+                <span class="fg-switch-track"></span>
+              </label>
+            </div>
+
+            <div class="fg-field">
+              <label class="fg-label" for="strategy">节点选择</label>
+              <select class="fg-select" id="strategy">
+                <option value="auto">自动选择最优节点（按测速结果）</option>
+                <option value="manual">手动指定节点</option>
+              </select>
+            </div>
+
+            <div class="fg-field" id="manualNodeField" hidden>
+              <label class="fg-label" for="manualNode">指定节点</label>
+              <select class="fg-select" id="manualNode"></select>
+            </div>
+
+            <div class="fg-field">
+              <label class="fg-label" for="channelCount">首页展示通道数量</label>
+              <input class="fg-input" type="number" id="channelCount" min="1" max="10" />
+              <div class="fg-hint">仓库首页「加速」下拉里同时展示的可用通道条数</div>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">GitHub 打不开时自动代理</h2>
+            <p class="fg-section-desc">
+              当 github.com 连接失败（超时 / 无法解析）时，自动跳转到代理节点重开该页面。
+            </p>
+            <div class="fg-row">
+              <div>
+                <div class="fg-row-title">开启失败自动代理</div>
+                <div class="fg-row-sub">仅主框架导航失败时触发，同一地址最多重试 2 次</div>
+              </div>
+              <label class="fg-switch"><span class="fg-sr-only">开启失败自动代理</span>
+                <input type="checkbox" id="autoProxyOnFailure" />
+                <span class="fg-switch-track"></span>
+              </label>
+            </div>
+            <div class="fg-field" style="margin-top: 14px">
+              <label class="fg-label" for="fallbackNode"
+                >兜底节点（测速数据为空时使用）</label
+              >
+              <select class="fg-select" id="fallbackNode"></select>
+            </div>
+            <div class="fg-field">
+              <label class="fg-label" for="speedTestUrl">测速样本文件</label>
+              <input
+                class="fg-input"
+                id="speedTestUrl"
+                placeholder="https://raw.githubusercontent.com/..."
+              />
+              <div class="fg-hint">用于带宽测算，建议 50KB ~ 2MB 的公开文件</div>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">页面增强</h2>
+            <p class="fg-section-desc">Web IDE 跳转与 Issue 翻译。</p>
+            <div class="fg-field">
+              <label class="fg-label" for="webIDE">Web IDE</label>
+              <select class="fg-select" id="webIDE">
+                <option value="Nothing">不使用</option>
+                <option value="GitHub.Dev">GitHub.Dev</option>
+                <option value="GitHub1s.Com">GitHub1s.Com</option>
+              </select>
+              <div class="fg-hint">
+                GitHub1s 项目：
+                <a href="https://github.com/conwnet/github1s" target="_blank"
+                  >conwnet/github1s</a
+                >
+              </div>
+            </div>
+            <div class="fg-field">
+              <label class="fg-label" for="token">腾讯 AI 翻译 Token</label>
+              <input
+                class="fg-input"
+                id="token"
+                placeholder="填写后可在 Issue 页面一键翻译"
+              />
+            </div>
+            <div class="fg-field">
+              <label class="fg-label" for="language">翻译目标语言</label>
+              <select class="fg-select" id="language">
+                <option value="nothing">不翻译</option>
+                <option value="zh">中文</option>
+                <option value="en">英语</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="fg-card" style="margin-top: 16px">
+            <h2 class="fg-section-title">外观</h2>
+            <div class="fg-field">
+              <label class="fg-label" for="theme">主题</label>
+              <select class="fg-select" id="theme">
+                <option value="system">跟随系统</option>
+                <option value="light">浅色</option>
+                <option value="dark">深色</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 关于 ============ -->
+        <section class="tab-panel" data-panel="about">
+          <div class="fg-card">
+            <h2 class="fg-section-title">关于本项目</h2>
+            <p class="fg-section-desc">在 Fast-GitHub（v1.5.10）基础上重做的现代化版本。</p>
+            <ul class="about-list">
+              <li>
+                <b>节点来源</b>：<a
+                  href="https://github.com/hubporg/ghproxy-next"
+                  target="_blank"
+                  >hubporg/ghproxy-next</a
+                >
+                社区公益节点，内置 81 个
+              </li>
+              <li><b>自动更新</b>：每 24 小时同步一次，支持多镜像源降级</li>
+              <li><b>节点测速</b>：延迟探测 + 真实带宽测算，自动挑选最优节点</li>
+              <li><b>失败兜底</b>：github.com 打不开时自动走 gh-proxy 节点代理</li>
+              <li><b>登录保护</b>：白名单规则可在「登录保护」页自由编辑</li>
+              <li>
+                <b>上游项目</b>：<a
+                  href="https://github.com/Master-five-elements/Fast-GitHub"
+                  target="_blank"
+                  >Master-five-elements/Fast-GitHub</a
+                >
+              </li>
+            </ul>
+            <div class="notice">
+              ⚠️ 第三方公益节点会中转你的请求，请勿用于私有仓库、带 Token 或 Cookie 的地址。
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
