@@ -1,6 +1,6 @@
 {
   "name": "gh-accelerator",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "private": true,
   "type": "module",
   "description": "GitHub 加速 · 智能节点版：MV3 浏览器扩展（零构建，ESM + Biome 规范）",
