@@ -49,28 +49,22 @@ def api_get(url, token):
 
 
 def remote_index(token):
-    """递归拉取远端 gh-accelerator/ 与 tools/ 下的文件 -> {path: sha}"""
+    """递归拉取远端全部文件 -> {path: sha}（git trees API，一次调用）"""
+    url = "https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1" % (
+        OWNER,
+        REPO,
+        BRANCH,
+    )
+    status, data = api_get(url, token)
+    if status != 200:
+        print("  读取仓库树失败: HTTP %s %s" % (status, data.get("message", "")))
+        return {}
+    if data.get("truncated"):
+        print("  警告：仓库树被截断，结果可能不完整")
     index = {}
-
-    def walk(path):
-        url = "https://api.github.com/repos/%s/%s/contents/%s?ref=%s" % (
-            OWNER,
-            REPO,
-            path,
-            BRANCH,
-        )
-        status, data = api_get(url, token)
-        if status != 200:
-            print("  读取 %s 失败: HTTP %s %s" % (path, status, data.get("message", "")))
-            return
-        for item in data:
-            if item["type"] == "dir":
-                walk(item["path"])
-            else:
-                index[item["path"]] = item.get("sha")
-
-    for top in ("gh-accelerator", "tools"):
-        walk(top)
+    for item in data.get("tree", []):
+        if item["type"] == "blob":
+            index[item["path"]] = item.get("sha")
     return index
 
 
