@@ -1,0 +1,155 @@
+.popup-body {
+  width: 348px;
+  padding: 0;
+}
+
+/* --------------------------- 玻璃态顶栏 --------------------------- */
+
+.ph {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--fg-surface-glass);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--fg-border);
+}
+
+.ph-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: linear-gradient(
+    135deg,
+    var(--fg-accent),
+    var(--fg-accent-2) 70%,
+    var(--fg-accent-3)
+  );
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(91, 91, 214, 0.32);
+}
+
+.ph-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ph-sub {
+  color: var(--fg-muted);
+  font-size: 11px;
+}
+
+/* ------------------------------ 节点卡片 ------------------------------ */
+
+.p-card {
+  margin: 12px;
+  padding: 15px;
+  background: var(--fg-surface);
+  border: 1px solid var(--fg-border);
+  border-radius: var(--fg-radius);
+  box-shadow: var(--fg-shadow-1);
+  transition: box-shadow 0.22s var(--fg-ease);
+}
+
+.p-card:hover {
+  box-shadow: var(--fg-shadow-2);
+}
+
+.p-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.p-card-label {
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.p-node {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p-metrics {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 12px;
+}
+
+.p-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.p-actions .fg-btn {
+  flex: 1;
+}
+
+.p-actions-2 {
+  margin-top: 10px;
+}
+
+/* ------------------------------ 当前页面 ------------------------------ */
+
+.p-block {
+  margin: 0 12px 12px;
+  padding: 13px 15px;
+  background: var(--fg-surface);
+  border: 1px solid var(--fg-border);
+  border-radius: var(--fg-radius);
+}
+
+.p-block-title {
+  margin-bottom: 6px;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.p-url {
+  max-height: 52px;
+  overflow: hidden;
+  color: var(--fg-text-2);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------ 页脚 ------------------------------ */
+
+.pf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--fg-surface-glass);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--fg-border);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+}
