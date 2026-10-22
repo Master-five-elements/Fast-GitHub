@@ -105,7 +105,7 @@ async function verifyOptions(browser, extId) {
 
   // 节点仓库区块
   const repoItems = await page.$$eval("#repoList .repo-item", (els) => els.length);
-  check("节点仓库列表渲染", repoItems === 3, `${repoItems} 个仓库`);
+  check("节点仓库列表渲染", repoItems === 8, `${repoItems} 个仓库`);
 
   const repoNames = await page.$$eval("#repoList .repo-name a", (els) =>
     els.map((el) => el.textContent.trim()),
@@ -248,6 +248,25 @@ async function verifyOptions(browser, extId) {
   });
   check("后台判定登录页受保护", guard?.blocked === true, JSON.stringify(guard));
 
+  // 反馈通道：关于页卡片
+  await page.click('[data-tab="about"]');
+  await new Promise((r) => setTimeout(r, 400));
+  const feedback = await page.evaluate(() => {
+    const card = document.querySelector(".feedback-card");
+    const link = card?.querySelector("a");
+    return {
+      hasCard: Boolean(card),
+      href: link?.getAttribute("href") ?? "",
+      text: (card?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 30),
+    };
+  });
+  check(
+    "设置页关于含反馈卡片且地址正确",
+    feedback.hasCard &&
+      feedback.href === "https://github.com/Master-five-elements/Fast-GitHub/issues",
+    `${feedback.text} | ${feedback.href}`,
+  );
+
   check("设置页无运行时报错", errors.length === 0, errors.slice(0, 2).join(" | "));
   await page.close();
 }
@@ -267,6 +286,14 @@ async function verifyPopup(browser, extId) {
 
   const hasButtons = await page.$$eval(".p-actions button", (els) => els.length);
   check("弹窗操作按钮齐全", hasButtons >= 5, `${hasButtons} 个`);
+
+  // 反馈通道：弹窗页脚链接
+  const popupFeedback = await page.$eval(".pf-link", (el) => el.getAttribute("href"));
+  check(
+    "弹窗含反馈链接且地址正确",
+    popupFeedback === "https://github.com/Master-five-elements/Fast-GitHub/issues",
+    popupFeedback,
+  );
 
   check("弹窗无运行时报错", errors.length === 0, errors.slice(0, 2).join(" | "));
   await page.close();
@@ -357,6 +384,17 @@ async function verifyContentScript(browser, extId) {
       (el) => el.textContent ?? "",
     );
     check("加速按钮文案正确", triggerText.includes("加速"), triggerText.trim());
+
+    // 反馈通道：注入面板底部链接
+    const panelFeedback = await page.$eval(
+      "#fg-speed-btn .fg-panel-feedback",
+      (el) => el.getAttribute("href"),
+    );
+    check(
+      "注入面板含反馈链接且地址正确",
+      panelFeedback === "https://github.com/Master-five-elements/Fast-GitHub/issues",
+      panelFeedback,
+    );
   }
   check("注入过程无运行时报错", errors.length === 0, errors.slice(0, 2).join(" | "));
 
